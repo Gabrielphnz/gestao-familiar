@@ -1,0 +1,30 @@
+{
+  "name": "Gestão Familiar",
+  "short_name": "Gestão",
+  "description": "App de gestão financeira familiar com Firebase",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nova Despesa",
+      "short_name": "Despesa",
+      "description": "Adicionar uma despesa rápida",
+      "url": "/?acao=despesa",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
