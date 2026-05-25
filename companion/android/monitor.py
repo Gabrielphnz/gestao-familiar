@@ -18,7 +18,7 @@ import subprocess, json, re, time, os
 # ════════════════════════════════════════════════════
 UID_FIREBASE   = "SEU_UID_AQUI"
 WEBHOOK_TOKEN  = "SEU_TOKEN_AQUI"
-WEBHOOK_URL    = "https://us-central1-device-streaming-8cc2d083.cloudfunctions.net/webhook"
+WEBHOOK_URL    = "https://webhook-petxgwxf5a-uc.a.run.app"
 # ════════════════════════════════════════════════════
 
 INTERVALO_SEG = 6   # verifica notificações a cada N segundos

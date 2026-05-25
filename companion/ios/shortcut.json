@@ -51,7 +51,7 @@
       "passo": 5,
       "acao": "Obter conteúdo de URL",
       "config": {
-        "url": "https://us-central1-device-streaming-8cc2d083.cloudfunctions.net/webhook",
+        "url": "https://webhook-petxgwxf5a-uc.a.run.app",
         "metodo": "POST",
         "cabecalhos": { "Content-Type": "application/json" },
         "corpo_json": {
