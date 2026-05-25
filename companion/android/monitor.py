@@ -13,13 +13,40 @@ Instalação:
 
 import subprocess, json, re, time, os
 
-# ════════════════════════════════════════════════════
-#   CONFIGURE AQUI — copie do app em Ajustes
-# ════════════════════════════════════════════════════
-UID_FIREBASE   = "SEU_UID_AQUI"
-WEBHOOK_TOKEN  = "SEU_TOKEN_AQUI"
-WEBHOOK_URL    = "https://webhook-petxgwxf5a-uc.a.run.app"
-# ════════════════════════════════════════════════════
+WEBHOOK_URL = "https://webhook-petxgwxf5a-uc.a.run.app"
+CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".gestao_config")
+
+# ── Carrega ou solicita configuração ─────────────────────────────
+def carregar_config():
+    cfg = {}
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE) as f:
+                cfg = json.load(f)
+        except Exception:
+            cfg = {}
+
+    uid   = cfg.get("uid", "").strip()
+    token = cfg.get("token", "").strip()
+
+    if not uid or not token or uid == "SEU_UID_AQUI" or token == "SEU_TOKEN_AQUI":
+        print("\n╔══════════════════════════════════════╗")
+        print("║   Configuração inicial necessária    ║")
+        print("╚══════════════════════════════════════╝")
+        print("\nAbra o app → Ajustes → e copie os valores abaixo.\n")
+        uid   = input("  Cole seu UID Firebase : ").strip()
+        token = input("  Cole seu Token        : ").strip()
+        if not uid or not token:
+            print("\n❌ UID e Token são obrigatórios. Tente novamente.")
+            exit(1)
+        with open(CONFIG_FILE, "w") as f:
+            json.dump({"uid": uid, "token": token}, f)
+        print(f"\n✅ Configuração salva em {CONFIG_FILE}")
+
+    return uid, token
+
+UID_FIREBASE, WEBHOOK_TOKEN = carregar_config()
+# ─────────────────────────────────────────────────────────────────
 
 INTERVALO_SEG = 6   # verifica notificações a cada N segundos
 VALOR_MINIMO  = 0.50  # ignora valores abaixo disso
@@ -146,8 +173,4 @@ def monitorar():
 
 
 if __name__ == "__main__":
-    if UID_FIREBASE == "SEU_UID_AQUI" or WEBHOOK_TOKEN == "SEU_TOKEN_AQUI":
-        print("\n⚠️  Configure UID_FIREBASE e WEBHOOK_TOKEN neste arquivo antes de iniciar!")
-        print("    Copie em: Gestão Familiar → Ajustes → Token de Integração\n")
-        exit(1)
     monitorar()
