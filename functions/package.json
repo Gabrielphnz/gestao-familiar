@@ -1,0 +1,15 @@
+{
+  "name": "gestao-familiar-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions — Gestão Familiar",
+  "engines": { "node": "18" },
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.0"
+  }
+}
