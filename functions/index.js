@@ -9,7 +9,7 @@ const db = getFirestore();
  * POST /webhook
  * Body: { uid, token, tipo, valor, descricao, categoria?, banco?, fonte? }
  */
-exports.webhook = onRequest({ cors: true, region: "us-central1" }, async (req, res) => {
+exports.webhook = onRequest({ cors: true, region: "us-central1", invoker: "public" }, async (req, res) => {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Headers", "Content-Type");
 

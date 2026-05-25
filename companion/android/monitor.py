@@ -138,13 +138,23 @@ def monitorar(uid, token, debug=False):
     # Verifica permissão logo no início
     try:
         r = subprocess.run(["termux-notification-list"], capture_output=True, text=True, timeout=8)
-        notifs = json.loads(r.stdout or "[]")
+        raw = (r.stdout or "").strip()
+        if not raw:
+            print("\n   ❌ PERMISSÃO DE NOTIFICAÇÃO NÃO CONCEDIDA.")
+            print("   ──────────────────────────────────────────────")
+            print("   Faça isso AGORA no Android:")
+            print("   1. Abra: Configurações → Apps")
+            print("   2. Toque nos 3 pontos → Acesso especial")
+            print("   3. Acesso a notificações")
+            print("   4. Encontre 'Termux:API' e ATIVE")
+            print("   5. Volte aqui e rode novamente\n")
+            print("   ⚠️  Se não aparecer 'Termux:API' na lista,")
+            print("   instale o app 'Termux:API' no F-Droid.\n")
+            exit(1)
+        notifs = json.loads(raw)
         print(f"   📋 {len(notifs)} notificação(ões) visível(eis) agora.")
         if len(notifs) == 0:
-            print("\n   ⚠️  NENHUMA NOTIFICAÇÃO ENCONTRADA.")
-            print("   Verifique se concedeu permissão de notificações ao Termux:API:")
-            print("   Configurações Android → Apps → Acesso especial")
-            print("   → Acesso a notificações → Termux:API → Ativar\n")
+            print("   (Nenhuma no momento — monitor vai aguardar novas)\n")
     except FileNotFoundError:
         print("\n   ❌ termux-notification-list não encontrado!")
         print("   Execute: pkg install termux-api\n")
@@ -157,7 +167,11 @@ def monitorar(uid, token, debug=False):
     while True:
         try:
             r = subprocess.run(["termux-notification-list"], capture_output=True, text=True, timeout=8)
-            notifs = json.loads(r.stdout or "[]")
+            raw = (r.stdout or "").strip()
+            if not raw:
+                if debug: print("[AVISO] termux-notification-list retornou vazio. Verifique permissão de notificações.")
+                time.sleep(INTERVALO); continue
+            notifs = json.loads(raw)
 
             for n in notifs:
                 nid = f"{n.get('id','')}_{n.get('when',0)}"
