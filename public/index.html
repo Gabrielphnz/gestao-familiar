@@ -182,30 +182,27 @@
 
     <!-- TELA CARTÕES -->
     <div id="tela-cartoes" class="hidden flex-1 overflow-y-auto p-6 pt-8 pb-28 w-full">
-      <div class="flex items-center gap-4 mb-2">
-        <button class="btn-abrir-menu -ml-2 p-2 text-gray-800 hover:text-blue-600 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <h2 class="text-3xl font-bold text-gray-800">Cartões 💳</h2>
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-4">
+          <button class="btn-abrir-menu -ml-2 p-2 text-gray-800 hover:text-blue-600 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h2 class="text-3xl font-bold text-gray-800">Cartões 💳</h2>
+        </div>
+        <button id="btn-abrir-novo-cartao" class="bg-blue-600 text-white font-bold text-xs px-3 py-2 rounded-xl hover:bg-blue-700 transition flex items-center gap-1">+ Novo</button>
       </div>
       <div class="flex justify-between items-center bg-white p-2 mb-4 mt-4 rounded-xl shadow-sm border border-gray-100">
         <button class="btn-mes-ant text-gray-400 hover:text-blue-600 px-4 font-bold text-lg">&lt;</button>
         <span class="label-mes-ano font-bold text-gray-700 uppercase tracking-wider text-[11px]">CARREGANDO...</span>
         <button class="btn-mes-prox text-gray-400 hover:text-blue-600 px-4 font-bold text-lg">&gt;</button>
       </div>
-      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
-        <h3 class="font-bold text-gray-700 mb-3">Cadastrar Novo Cartão</h3>
-        <div class="space-y-3">
-          <input type="text" id="input-cartao-nome" placeholder="Nome (Ex: Nubank)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
-          <input type="number" id="input-cartao-limite" step="0.01" placeholder="Limite Total (R$)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
-          <div class="flex gap-3">
-            <input type="number" id="input-cartao-fechamento" min="1" max="28" placeholder="Dia fechamento (1-28)" class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
-            <input type="number" id="input-cartao-vencimento" min="1" max="28" placeholder="Dia vencimento (1-28)" class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
-          </div>
-          <button id="btn-add-cartao" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">Cadastrar Cartão</button>
-        </div>
-      </div>
       <div id="lista-cartoes" class="space-y-4"></div>
+      <div id="empty-cartoes" class="hidden text-center py-16 text-gray-400">
+        <p class="text-6xl mb-4">💳</p>
+        <p class="font-bold text-gray-600 text-lg">Nenhum cartão cadastrado</p>
+        <p class="text-sm mt-2 max-w-xs mx-auto">Cadastre seus cartões de crédito para acompanhar fatura aberta, próxima fatura e vencimentos.</p>
+        <button onclick="document.getElementById('btn-abrir-novo-cartao').click()" class="mt-4 bg-blue-600 text-white font-bold px-5 py-3 rounded-xl">+ Cadastrar primeiro cartão</button>
+      </div>
     </div>
 
     <!-- TELA RECORRENTES -->
@@ -531,6 +528,80 @@
       </div>
     </div>
 
+    <!-- MODAL NOVO/EDITAR CARTÃO -->
+    <div id="modal-novo-cartao" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+      <div class="bg-white w-full rounded-t-3xl p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 id="titulo-modal-cartao" class="text-xl font-bold text-gray-800">Novo Cartão 💳</h3>
+          <button id="btn-cancelar-novo-cartao" class="text-gray-400 hover:text-red-500 font-bold text-2xl px-2">&times;</button>
+        </div>
+        <form id="form-novo-cartao" class="space-y-4">
+          <input type="hidden" id="input-cartao-nome-antigo" value="">
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome do cartão</label>
+            <input type="text" id="input-cartao-nome" required placeholder="Ex: Nubank Roxo" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Limite total (R$)</label>
+            <input type="number" id="input-cartao-limite" step="0.01" required placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fechamento</label>
+              <input type="number" id="input-cartao-fechamento" min="1" max="28" placeholder="Dia 1-28" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Vencimento</label>
+              <input type="number" id="input-cartao-vencimento" min="1" max="28" placeholder="Dia 1-28" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-400 -mt-2">Estes campos permitem separar Fatura Aberta de Próxima Fatura.</p>
+          <button id="btn-add-cartao" type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg mt-2 hover:bg-blue-700">Salvar Cartão</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL DETALHES DO CARTÃO -->
+    <div id="modal-detalhes-cartao" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+      <div class="bg-white w-full rounded-t-3xl overflow-y-auto max-h-[95vh]">
+        <div id="det-cartao-header" class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-6 rounded-t-3xl">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Cartão</p>
+              <h3 id="det-cartao-nome" class="font-bold text-2xl">—</h3>
+            </div>
+            <button id="btn-fechar-detalhes-cartao" class="text-white/70 hover:text-white font-bold text-2xl bg-white/10 w-9 h-9 rounded-lg flex items-center justify-center">&times;</button>
+          </div>
+          <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Fatura Aberta</p>
+          <p id="det-cartao-fatura" class="text-4xl font-bold mt-1">R$ 0,00</p>
+          <p id="det-cartao-vence" class="text-xs mt-2 opacity-90"></p>
+          <button id="btn-pagar-fatura-det" class="w-full bg-white text-blue-700 font-bold py-3.5 rounded-xl mt-4 shadow-lg hover:bg-gray-50">💳 Pagar Fatura</button>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-3 gap-2 mb-4">
+            <div class="bg-gray-50 p-2.5 rounded-xl text-center">
+              <p class="text-[9px] font-bold text-gray-500 uppercase">Limite</p>
+              <p class="text-xs font-bold text-gray-800" id="det-cartao-limite">R$ 0</p>
+            </div>
+            <div class="bg-gray-50 p-2.5 rounded-xl text-center">
+              <p class="text-[9px] font-bold text-gray-500 uppercase">Próx Fatura</p>
+              <p class="text-xs font-bold text-gray-800" id="det-cartao-prox">R$ 0</p>
+            </div>
+            <div class="bg-gray-50 p-2.5 rounded-xl text-center">
+              <p class="text-[9px] font-bold text-gray-500 uppercase">Disponível</p>
+              <p class="text-xs font-bold text-green-600" id="det-cartao-disp">R$ 0</p>
+            </div>
+          </div>
+          <h4 class="font-bold text-gray-700 mb-3 mt-2 text-sm">Transações da fatura</h4>
+          <ul id="det-cartao-transacoes" class="space-y-2 mb-4 max-h-[40vh] overflow-y-auto"></ul>
+          <div class="flex gap-2">
+            <button id="btn-editar-cartao-det" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl text-sm">✏️ Editar</button>
+            <button id="btn-excluir-cartao-det" class="flex-1 bg-red-100 text-red-700 font-bold py-3 rounded-xl text-sm">🗑️ Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL DASHBOARD PÓS-IMPORT -->
     <div id="modal-dashboard-import" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
       <div class="bg-white w-full rounded-t-3xl p-6 overflow-y-auto max-h-[95vh]">
@@ -835,6 +906,7 @@
         const ts = t.timestamp + (n % 1000);
         const cat = t.categoria || catPad || t.categoriaSugerida || '📥 Importado';
         const item = { tipo: t.tipo, valor: t.valor, categoria: cat, banco, texto: t.texto, timestamp: t.timestamp, fonte: 'import' };
+        if (ehCartao) item.cartaoVinculado = banco; // marca explicitamente
         await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/lancamentos`, String(ts)), item);
         importadas.push(item);
         n++;
@@ -960,6 +1032,28 @@
       } catch { alert('Erro ao ler imagem. Verifique se a foto está nítida.'); }
       finally { btn.innerText = 'Fotografar'; btn.disabled = false; e.target.value = ''; }
     });
+
+    // ── HELPER: lançamento pertence a cartão? ───────────────────
+    function ehLancamentoDeCartao(item) {
+      if (!item) return false;
+      if (item.cartaoVinculado && item.categoria !== '💳 Fatura Cartão') return true;
+      return (cacheConfig.cartoes||[]).some(c => c.nome === item.banco);
+    }
+
+    function recalcularTotaisMes() {
+      let rec = 0, des = 0, saldoAnterior = 0;
+      // Usa cacheSaldoAnterior se já calculado
+      if (typeof window._saldoAnt === 'number') saldoAnterior = window._saldoAnt;
+      cacheLancs.forEach(item => {
+        if (ehLancamentoDeCartao(item)) return;
+        if (item.tipo === 'Receita') rec += item.valor; else des += item.valor;
+      });
+      document.getElementById('valor-receitas').innerText = 'R$ ' + rec.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      document.getElementById('valor-despesas').innerText = 'R$ ' + des.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      const saldoFinal = saldoAnterior + (rec - des);
+      document.getElementById('valor-saldo').innerText = saldoFinal.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      atualizarSaude(rec, des);
+    }
 
     // ── DETECTOR DE GASTOS RECORRENTES ───────────────────────────
     function normalizarDesc(s) {
@@ -1664,19 +1758,140 @@
       if (v) await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), {categorias: arrayUnion(v)}, {merge:true});
       document.getElementById('input-nova-categoria').value = '';
     };
-    document.getElementById('btn-add-cartao').onclick = async () => {
+    // ── NOVO/EDITAR CARTÃO ──────────────────────────────────────
+    document.getElementById('btn-abrir-novo-cartao').addEventListener('click', () => {
+      document.getElementById('form-novo-cartao').reset();
+      document.getElementById('input-cartao-nome-antigo').value = '';
+      document.getElementById('titulo-modal-cartao').innerText = 'Novo Cartão 💳';
+      document.getElementById('modal-novo-cartao').classList.remove('hidden');
+    });
+    document.getElementById('btn-cancelar-novo-cartao').addEventListener('click', () => {
+      document.getElementById('modal-novo-cartao').classList.add('hidden');
+    });
+    window.abrirEditarCartao = (ct) => {
+      document.getElementById('input-cartao-nome-antigo').value = ct.nome;
+      document.getElementById('input-cartao-nome').value = ct.nome;
+      document.getElementById('input-cartao-limite').value = ct.limite;
+      document.getElementById('input-cartao-fechamento').value = ct.fechamento || '';
+      document.getElementById('input-cartao-vencimento').value = ct.vencimento || '';
+      document.getElementById('titulo-modal-cartao').innerText = 'Editar Cartão 💳';
+      document.getElementById('modal-novo-cartao').classList.remove('hidden');
+    };
+    document.getElementById('form-novo-cartao').onsubmit = async e => {
+      e.preventDefault();
+      const nomeAntigo = document.getElementById('input-cartao-nome-antigo').value;
       const n = document.getElementById('input-cartao-nome').value.trim();
       const l = parseFloat(document.getElementById('input-cartao-limite').value);
       const fe = parseInt(document.getElementById('input-cartao-fechamento').value) || null;
       const ve = parseInt(document.getElementById('input-cartao-vencimento').value) || null;
-      if (n && !isNaN(l)) {
-        const obj = { nome: n, limite: l };
-        if (fe && fe >= 1 && fe <= 28) obj.fechamento = fe;
-        if (ve && ve >= 1 && ve <= 28) obj.vencimento = ve;
+      if (!n || isNaN(l)) return;
+      const obj = { nome: n, limite: l };
+      if (fe && fe >= 1 && fe <= 28) obj.fechamento = fe;
+      if (ve && ve >= 1 && ve <= 28) obj.vencimento = ve;
+      if (nomeAntigo) {
+        const novos = (cacheConfig.cartoes||[]).map(c => c.nome === nomeAntigo ? obj : c);
+        await updateDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), { cartoes: novos });
+      } else {
         await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), { cartoes: arrayUnion(obj) }, { merge: true });
-        ['input-cartao-nome','input-cartao-limite','input-cartao-fechamento','input-cartao-vencimento'].forEach(id => document.getElementById(id).value = '');
       }
+      document.getElementById('modal-novo-cartao').classList.add('hidden');
+      mostrarToast('Cartão salvo', `${n} foi ${nomeAntigo ? 'atualizado' : 'cadastrado'}.`, 'success');
     };
+
+    // ── DETALHES DO CARTÃO ──────────────────────────────────────
+    let cartaoAtual = null;
+    window.abrirDetalhesCartao = (ct) => {
+      cartaoAtual = ct;
+      const hoje = new Date();
+      const fechamento = ct.fechamento || null;
+      const vencimento = ct.vencimento || null;
+      let faturaAberta = 0, proximaFatura = 0, gastoTotal = 0;
+      let dataUltimoFech = null, dataProxFech = null, dataProxVenc = null;
+      if (fechamento) {
+        const m = hoje.getMonth(), y = hoje.getFullYear();
+        if (hoje.getDate() > fechamento) {
+          dataUltimoFech = new Date(y, m, fechamento, 23, 59, 59);
+          dataProxFech   = new Date(y, m+1, fechamento, 23, 59, 59);
+        } else {
+          dataUltimoFech = new Date(y, m-1, fechamento, 23, 59, 59);
+          dataProxFech   = new Date(y, m, fechamento, 23, 59, 59);
+        }
+        if (vencimento) {
+          dataProxVenc = new Date(dataProxFech.getFullYear(), dataProxFech.getMonth(), vencimento);
+          if (dataProxVenc < dataProxFech) dataProxVenc = new Date(dataProxFech.getFullYear(), dataProxFech.getMonth()+1, vencimento);
+        }
+      }
+      const trans = [];
+      cacheLancs.forEach(l => {
+        const pertence = (l.banco === ct.nome) || (l.cartaoVinculado === ct.nome && l.categoria !== '💳 Fatura Cartão');
+        if (!pertence) {
+          if (l.categoria === '💳 Fatura Cartão' && l.cartaoVinculado === ct.nome) gastoTotal -= l.valor;
+          return;
+        }
+        const v = l.tipo === 'Despesa' ? l.valor : -l.valor;
+        gastoTotal += v;
+        if (fechamento) {
+          if (l.timestamp > dataUltimoFech.getTime() && l.timestamp <= dataProxFech.getTime()) { faturaAberta += v; trans.push({...l, faseDaFatura: 'aberta'}); }
+          else if (l.timestamp > dataProxFech.getTime()) { proximaFatura += v; trans.push({...l, faseDaFatura: 'proxima'}); }
+        } else { trans.push({...l, faseDaFatura: 'aberta'}); faturaAberta += v; }
+      });
+      if (faturaAberta < 0) faturaAberta = 0;
+      if (proximaFatura < 0) proximaFatura = 0;
+      if (gastoTotal < 0) gastoTotal = 0;
+
+      document.getElementById('det-cartao-nome').innerText = ct.nome;
+      document.getElementById('det-cartao-fatura').innerText = 'R$ ' + faturaAberta.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      document.getElementById('det-cartao-limite').innerText = 'R$ ' + ct.limite.toLocaleString('pt-BR');
+      document.getElementById('det-cartao-prox').innerText = 'R$ ' + proximaFatura.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      document.getElementById('det-cartao-disp').innerText = 'R$ ' + (ct.limite - gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2});
+      const venceEl = document.getElementById('det-cartao-vence');
+      if (dataProxVenc) {
+        const dStr = `${String(dataProxVenc.getDate()).padStart(2,'0')}/${String(dataProxVenc.getMonth()+1).padStart(2,'0')}`;
+        const dias = Math.ceil((dataProxVenc - hoje) / 86400000);
+        venceEl.innerHTML = `Vence em <b>${dStr}</b>${dias >= 0 ? ` (${dias}d)` : ' <span class="text-red-200 font-bold">(atrasada)</span>'}`;
+      } else { venceEl.innerText = ''; }
+
+      // Lista transações ordenada por data desc
+      const lista = document.getElementById('det-cartao-transacoes');
+      const transAberta = trans.filter(t => t.faseDaFatura === 'aberta').sort((a,b) => b.timestamp - a.timestamp);
+      if (!transAberta.length) {
+        lista.innerHTML = '<li class="text-center text-gray-400 py-6 text-sm">Sem transações nesta fatura</li>';
+      } else {
+        lista.innerHTML = '';
+        transAberta.forEach(t => {
+          const emoji = getEmoji(t.categoria);
+          const [bg, fg] = getCatColor(t.categoria);
+          const dt = new Date(t.timestamp);
+          const dStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+          lista.innerHTML += `<li class="flex items-center gap-3 bg-gray-50 p-2.5 rounded-xl">
+            <div class="w-9 h-9 ${bg} rounded-xl flex items-center justify-center text-base overflow-hidden">${emoji}</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-xs text-gray-800 truncate">${t.texto}</p>
+              <p class="text-[10px] ${fg} font-semibold">${t.categoria} · ${dStr}</p>
+            </div>
+            <p class="font-bold text-sm ${t.tipo==='Receita'?'text-green-600':'text-gray-800'} whitespace-nowrap">${t.tipo==='Receita'?'+':'-'}R$ ${t.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+          </li>`;
+        });
+      }
+
+      // Bind buttons no header do modal
+      document.getElementById('btn-pagar-fatura-det').onclick = () => {
+        document.getElementById('modal-detalhes-cartao').classList.add('hidden');
+        abrirModalFatura(ct.nome, faturaAberta);
+      };
+      document.getElementById('btn-editar-cartao-det').onclick = () => {
+        document.getElementById('modal-detalhes-cartao').classList.add('hidden');
+        abrirEditarCartao(ct);
+      };
+      document.getElementById('btn-excluir-cartao-det').onclick = () => {
+        document.getElementById('modal-detalhes-cartao').classList.add('hidden');
+        removerCartao(ct.nome);
+      };
+      document.getElementById('modal-detalhes-cartao').classList.remove('hidden');
+    };
+    document.getElementById('btn-fechar-detalhes-cartao').addEventListener('click', () => {
+      document.getElementById('modal-detalhes-cartao').classList.add('hidden');
+    });
 
     document.getElementById('form-novo').onsubmit = async e => {
       e.preventDefault();
@@ -1822,6 +2037,8 @@
           listaC.innerHTML += `<li class="flex justify-between p-2 bg-gray-50 rounded-xl border border-gray-100 text-sm"><b>${c}</b><button onclick="removerCategoria('${c}')" class="text-red-400">🗑️</button></li>`;
           selC.innerHTML += `<option value="${c}">${c}</option>`;
         });
+        // Recalcula totais — cartões podem ter mudado e afetam o cálculo
+        if (cacheLancs.length) recalcularTotaisMes();
         renderizarRelatorios();
       });
 
@@ -1975,30 +2192,19 @@
       getDocs(query(collection(db, `usuarios/${uid}/lancamentos`), where('timestamp','<',inicioMes))).then(pastSnap => {
         let saldoAnterior = 0;
         pastSnap.forEach(d => {
-          const it = d.data();
-          if (!(cacheConfig.cartoes||[]).some(c => c.nome === it.banco)) {
+          const it = { id: d.id, ...d.data() };
+          if (!ehLancamentoDeCartao(it)) {
             saldoAnterior += it.tipo === 'Receita' ? it.valor : -it.valor;
           }
         });
+        window._saldoAnt = saldoAnterior;
+        document.getElementById('valor-saldo-anterior').innerText = 'Transitado: R$ ' + saldoAnterior.toLocaleString('pt-BR',{minimumFractionDigits:2});
 
         const qL = query(collection(db, `usuarios/${uid}/lancamentos`), where('timestamp','>=',inicioMes), where('timestamp','<=',fimMes), orderBy('timestamp','desc'));
         inscricaoLancs = onSnapshot(qL, snap => {
-          cacheLancs = []; let rec = 0, des = 0;
-          snap.forEach(d => {
-            const item = {id: d.id, ...d.data()};
-            cacheLancs.push(item);
-            if (!(cacheConfig.cartoes||[]).some(c => c.nome === item.banco)) {
-              if (item.tipo === 'Receita') rec += item.valor; else des += item.valor;
-            }
-          });
-
-          document.getElementById('valor-receitas').innerText = 'R$ ' + rec.toLocaleString('pt-BR',{minimumFractionDigits:2});
-          document.getElementById('valor-despesas').innerText = 'R$ ' + des.toLocaleString('pt-BR',{minimumFractionDigits:2});
-          const saldoFinal = saldoAnterior + (rec - des);
-          document.getElementById('valor-saldo').innerText = saldoFinal.toLocaleString('pt-BR',{minimumFractionDigits:2});
-          document.getElementById('valor-saldo-anterior').innerText = 'Transitado: R$ ' + saldoAnterior.toLocaleString('pt-BR',{minimumFractionDigits:2});
-
-          atualizarSaude(rec, des);
+          cacheLancs = [];
+          snap.forEach(d => cacheLancs.push({ id: d.id, ...d.data() }));
+          recalcularTotaisMes();
           renderizarListaFiltrada();
           renderizarRelatorios();
           verificarAlertas();
@@ -2009,8 +2215,10 @@
     // ── RELATÓRIOS ────────────────────────────────────────────────
     function renderizarRelatorios() {
       const listaCartoes = document.getElementById('lista-cartoes');
+      const emptyEl = document.getElementById('empty-cartoes');
       if (listaCartoes && cacheConfig.cartoes) {
         listaCartoes.innerHTML = '';
+        if (emptyEl) emptyEl.classList.toggle('hidden', cacheConfig.cartoes.length > 0);
         const hoje = new Date();
         cacheConfig.cartoes.forEach(ct => {
           // Fatura aberta = transações desde último fechamento
@@ -2039,7 +2247,9 @@
           }
 
           cacheLancs.forEach(l => {
-            if (l.banco !== ct.nome) {
+            // Lançamento pertence a este cartão se: banco == nome OU cartaoVinculado == nome (excluindo o pagamento da fatura)
+            const pertence = (l.banco === ct.nome) || (l.cartaoVinculado === ct.nome && l.categoria !== '💳 Fatura Cartão');
+            if (!pertence) {
               if (l.categoria === '💳 Fatura Cartão' && l.cartaoVinculado === ct.nome) gastoTotal -= l.valor;
               return;
             }
@@ -2066,44 +2276,33 @@
           const diasAteVenc = dataProxVenc ? Math.ceil((dataProxVenc - hoje) / 86400000) : null;
           const corVenc = diasAteVenc !== null ? (diasAteVenc <= 3 ? 'text-red-600' : diasAteVenc <= 7 ? 'text-amber-600' : 'text-gray-500') : '';
 
+          const valorFatura = fechamento ? faturaAberta : gastoTotal;
           listaCartoes.innerHTML += `
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden cursor-pointer hover:shadow-lg transition" onclick='abrirDetalhesCartao(${JSON.stringify(ct).replace(/'/g,"&apos;")})'>
               <div class="bg-gradient-to-br ${corGrad} text-white p-5">
                 <div class="flex justify-between items-start mb-3">
                   <div>
                     <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Cartão</p>
                     <h3 class="font-bold text-xl">${ct.nome}</h3>
                   </div>
-                  <div class="flex gap-2">
-                    <button onclick='editarCartaoCompleto(${JSON.stringify(ct).replace(/'/g,"&apos;")})' class="text-white/70 hover:text-white text-sm bg-white/10 w-7 h-7 rounded-lg flex items-center justify-center">✏️</button>
-                    <button onclick="removerCartao('${ct.nome}')" class="text-white/70 hover:text-white text-sm bg-white/10 w-7 h-7 rounded-lg flex items-center justify-center">🗑️</button>
-                  </div>
+                  ${dataVencStr ? `<div class="text-right">
+                    <p class="text-[9px] uppercase tracking-widest opacity-80 font-bold">Vence</p>
+                    <p class="text-sm font-bold">${dataVencStr}${diasAteVenc !== null && diasAteVenc >= 0 ? ` <span class="opacity-80">· ${diasAteVenc}d</span>` : ''}</p>
+                  </div>` : ''}
                 </div>
                 <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Fatura Aberta</p>
-                <p class="text-3xl font-bold mt-1">R$ ${(fechamento ? faturaAberta : gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
-                ${dataVencStr ? `<p class="text-xs mt-2 opacity-90">Vence em <b>${dataVencStr}</b> ${diasAteVenc !== null && diasAteVenc >= 0 ? `(${diasAteVenc}d)` : ''}</p>` : ''}
+                <p class="text-3xl font-bold mt-1">R$ ${valorFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+                <div class="flex justify-between text-[10px] mt-3 opacity-90">
+                  <span>Limite R$ ${ct.limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+                  <span>${pct.toFixed(0)}% usado · R$ ${(ct.limite-gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})} livres</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-1.5 mt-1">
+                  <div class="bg-white h-1.5 rounded-full" style="width:${pct}%"></div>
+                </div>
               </div>
-              <div class="p-5">
-                ${fechamento ? `
-                  <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-gray-50 p-3 rounded-xl">
-                      <p class="text-[10px] font-bold text-gray-500 uppercase">Próxima Fatura</p>
-                      <p class="text-base font-bold text-gray-800">R$ ${proximaFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded-xl">
-                      <p class="text-[10px] font-bold text-gray-500 uppercase">Fechamento</p>
-                      <p class="text-base font-bold text-gray-800">dia ${fechamento}</p>
-                    </div>
-                  </div>` : '<p class="text-[11px] text-amber-700 bg-amber-50 px-3 py-2 rounded-lg mb-3">⚠️ Configure fechamento e vencimento (editar ✏️) para separar fatura atual e próxima.</p>'}
-                <div class="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Limite: R$ ${ct.limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-                  <span class="font-bold ${corVenc || 'text-blue-600'}">${pct.toFixed(0)}%</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-2.5 mb-2">
-                  <div class="${corBarra} h-2.5 rounded-full transition-all duration-500" style="width:${pct}%"></div>
-                </div>
-                <p class="text-xs text-gray-500 mb-3">Disponível: <b class="text-gray-800">R$ ${(ct.limite-gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></p>
-                <button onclick="abrirModalFatura('${ct.nome}',${fechamento ? faturaAberta : gastoTotal})" class="w-full bg-blue-50 text-blue-600 font-bold py-2.5 rounded-lg hover:bg-blue-100 transition text-sm">💳 Pagar Fatura</button>
+              <div class="p-3 bg-white">
+                <button onclick="event.stopPropagation(); abrirModalFatura('${ct.nome}',${valorFatura})" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition shadow-md">💳 Pagar R$ ${valorFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})}</button>
+                ${!fechamento ? '<p class="text-[10px] text-amber-700 text-center mt-2">⚠️ Toque no cartão para configurar fechamento</p>' : `<p class="text-[10px] text-gray-400 text-center mt-2">Próxima fatura: R$ ${proximaFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})} · fecha dia ${fechamento}</p>`}
               </div>
             </div>`;
         });
