@@ -1,176 +1,209 @@
 #!/usr/bin/env python3
 """
-╔══════════════════════════════════════════════════════════╗
-║   Gestão Familiar — Monitor de Notificações (Android)    ║
-║   Requer: Termux + Termux:API + Python                   ║
-╚══════════════════════════════════════════════════════════╝
-
-Instalação:
-  1. Instale o Termux e Termux:API na Play Store / F-Droid
-  2. Execute: bash setup.sh
-  3. Configure UID_FIREBASE e WEBHOOK_TOKEN abaixo
+Gestão Familiar — Monitor Android
+Uso:
+  python monitor.py           → modo normal
+  python monitor.py --debug   → mostra TODAS as notificações (mesmo sem valor)
+  python monitor.py --test    → envia transação de teste sem precisar de notificação
+  python monitor.py --config  → reconfigurar UID e Token
 """
 
-import subprocess, json, re, time, os
+import subprocess, json, re, time, os, sys
+import urllib.request
 
 WEBHOOK_URL = "https://webhook-petxgwxf5a-uc.a.run.app"
 CONFIG_FILE = os.path.join(os.path.expanduser("~"), ".gestao_config")
+INTERVALO   = 5
+VALOR_MIN   = 0.50
 
-# ── Carrega ou solicita configuração ─────────────────────────────
-def carregar_config():
+# ── Config ────────────────────────────────────────────────────────
+def carregar_config(forcar=False):
     cfg = {}
-    if os.path.exists(CONFIG_FILE):
+    if not forcar and os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE) as f:
                 cfg = json.load(f)
         except Exception:
             cfg = {}
 
-    uid   = cfg.get("uid", "").strip()
-    token = cfg.get("token", "").strip()
+    uid   = cfg.get("uid","").strip()
+    token = cfg.get("token","").strip()
 
-    if not uid or not token or uid == "SEU_UID_AQUI" or token == "SEU_TOKEN_AQUI":
+    if not uid or not token or forcar:
         print("\n╔══════════════════════════════════════╗")
-        print("║   Configuração inicial necessária    ║")
+        print("║   Gestão Familiar — Configuração     ║")
         print("╚══════════════════════════════════════╝")
-        print("\nAbra o app → Ajustes → e copie os valores abaixo.\n")
-        uid   = input("  Cole seu UID Firebase : ").strip()
-        token = input("  Cole seu Token        : ").strip()
+        print("\nAbra o app → Ajustes → copie os valores:\n")
+        uid   = input("  UID Firebase : ").strip()
+        token = input("  Token        : ").strip()
         if not uid or not token:
-            print("\n❌ UID e Token são obrigatórios. Tente novamente.")
-            exit(1)
+            print("❌ UID e Token são obrigatórios."); exit(1)
         with open(CONFIG_FILE, "w") as f:
             json.dump({"uid": uid, "token": token}, f)
-        print(f"\n✅ Configuração salva em {CONFIG_FILE}")
+        print(f"\n✅ Salvo em {CONFIG_FILE}\n")
 
     return uid, token
 
-UID_FIREBASE, WEBHOOK_TOKEN = carregar_config()
-# ─────────────────────────────────────────────────────────────────
-
-INTERVALO_SEG = 6   # verifica notificações a cada N segundos
-VALOR_MINIMO  = 0.50  # ignora valores abaixo disso
-
-# Padrões de detecção em português (bancos brasileiros)
-PADROES = {
-    "Despesa": [
-        r"(?:compra|d[eé]bito|pix enviado|pagamento|cobrado|debitado)[^\d]*R?\$?\s*(\d[\d.]*[,]\d{2})",
-        r"R?\$\s*(\d[\d.]*[,]\d{2})[^\d]*(?:debitado|cobrado|pago|enviado)",
-        r"(?:compra aprovada)[^\d]*(\d[\d.]*[,]\d{2})",
-    ],
-    "Receita": [
-        r"(?:cr[eé]dito|pix recebido|dep[oó]sito|recebeu|creditado)[^\d]*R?\$?\s*(\d[\d.]*[,]\d{2})",
-        r"R?\$\s*(\d[\d.]*[,]\d{2})[^\d]*(?:creditado|recebido)",
-        r"(?:pix de .+ para voc)[^\d]*(\d[\d.]*[,]\d{2})",
-    ],
-}
-
-BANCOS = {
-    "nubank": "Nubank", "nu ": "Nubank",
-    "bradesco": "Bradesco",
-    "ita[uú]": "Itaú",
-    "caixa": "Caixa Econômica",
-    "banco do brasil": "Banco do Brasil", "bb ": "Banco do Brasil",
-    "santander": "Santander",
-    "inter": "Banco Inter",
-    "c6": "C6 Bank",
-    "picpay": "PicPay",
-    "mercado pago": "Mercado Pago",
-    "pagseguro": "PagSeguro",
-    "next": "Next",
-    "original": "Banco Original",
-}
-
-def extrair_valor(texto):
-    for tipo, padroes in PADROES.items():
-        for p in padroes:
-            m = re.search(p, texto, re.I | re.S)
-            if m:
-                raw = m.group(1).replace(".", "").replace(",", ".")
-                try:
-                    val = float(raw)
-                    if val >= VALOR_MINIMO:
-                        return tipo, val
-                except ValueError:
-                    pass
-    return None, None
-
-def detectar_banco(pkg, titulo):
-    texto = (pkg + " " + titulo).lower()
-    for k, v in BANCOS.items():
-        if re.search(k, texto):
-            return v
-    return "Automático"
-
-def enviar(tipo, valor, descricao, banco):
-    import urllib.request
+# ── Webhook ───────────────────────────────────────────────────────
+def enviar(uid, token, tipo, valor, descricao, banco="Automático"):
     payload = json.dumps({
-        "uid":      UID_FIREBASE,
-        "token":    WEBHOOK_TOKEN,
-        "tipo":     tipo,
-        "valor":    valor,
+        "uid": uid, "token": token,
+        "tipo": tipo, "valor": valor,
         "descricao": descricao[:100],
-        "banco":    banco,
-        "fonte":    "android-termux",
+        "banco": banco,
+        "categoria": "💰 Automático" if tipo == "Receita" else "💸 Automático",
+        "fonte": "android-termux"
     }).encode()
-
     req = urllib.request.Request(
         WEBHOOK_URL, data=payload, method="POST",
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json"}
     )
     try:
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            r = json.loads(resp.read())
-            sinal = "✅" if r.get("success") else "⚠️"
-            print(f"{sinal} {tipo}: R${valor:.2f} | {descricao[:45]} | {banco}")
+        with urllib.request.urlopen(req, timeout=12) as r:
+            resp = json.loads(r.read())
+            ok = resp.get("success")
+            print(f"  {'✅' if ok else '⚠️ '} {tipo} R${valor:.2f} | {descricao[:45]} | {banco}")
+            return ok
+    except urllib.error.HTTPError as e:
+        body = e.read().decode()
+        print(f"  ❌ HTTP {e.code}: {body}")
+        return False
     except Exception as e:
-        print(f"❌ Falha ao enviar: {e}")
+        print(f"  ❌ Erro de rede: {e}")
+        return False
 
-def monitorar():
-    print("\n🤖  Gestão Familiar — Monitor ativo")
-    print(f"    UID   : {UID_FIREBASE[:10]}...")
-    print(f"    Token : {'*' * 8}{WEBHOOK_TOKEN[-4:]}")
-    print("    Aguardando notificações bancárias...\n")
+def testar_webhook(uid, token):
+    print("\n🔌 Testando conexão com webhook...")
+    ok = enviar(uid, token, "Despesa", 0.01, "Teste de conexão Termux", "Teste")
+    if ok:
+        print("   Webhook OK! Verifique o app — deve ter aparecido R$0,01.\n")
+    else:
+        print("   Falha. Verifique UID e Token em Ajustes.\n")
+    return ok
+
+# ── Padrões ───────────────────────────────────────────────────────
+# Cobre: Pix recebido/enviado, compra débito, transferência, TED/DOC
+PADROES_REC = [
+    r"(?:recebeu|recebido|creditado|cr[eé]dito)[^\d]{0,30}R?\$?\s*(\d[\d.]*[,]\d{2})",
+    r"R?\$\s*(\d[\d.]*[,]\d{2})[^\d]{0,20}(?:recebido|creditado|cr[eé]dito)",
+    r"pix[^\d]{0,30}(\d[\d.]*[,]\d{2})[^\d]{0,20}(?:recebido|para voc|crédito)",
+    r"dep[oó]sito[^\d]{0,20}R?\$?\s*(\d[\d.]*[,]\d{2})",
+    r"entrada[^\d]{0,20}R?\$?\s*(\d[\d.]*[,]\d{2})",
+    r"ted recebida[^\d]{0,20}R?\$?\s*(\d[\d.]*[,]\d{2})",
+]
+PADROES_DES = [
+    r"(?:compra|d[eé]bito|pix enviado|pix de|pagamento|cobrado|debitado|saiu)[^\d]{0,30}R?\$?\s*(\d[\d.]*[,]\d{2})",
+    r"R?\$\s*(\d[\d.]*[,]\d{2})[^\d]{0,20}(?:debitado|cobrado|pago|enviado|saiu)",
+    r"voc[eê] (?:enviou|pagou|fez)[^\d]{0,30}(\d[\d.]*[,]\d{2})",
+    r"transfer[eê]ncia[^\d]{0,20}R?\$?\s*(\d[\d.]*[,]\d{2})[^\d]{0,20}(?:enviada|realizada|efetuada)",
+]
+BANCOS_PKG = {
+    "nubank": "Nubank", "bradesco": "Bradesco", "itau": "Itaú",
+    "caixa": "Caixa", "bancobrasil": "Banco do Brasil", "bb": "Banco do Brasil",
+    "santander": "Santander", "inter": "Banco Inter", "c6bank": "C6 Bank",
+    "picpay": "PicPay", "mercadopago": "Mercado Pago", "pagseguro": "PagSeguro",
+    "next": "Next", "original": "Banco Original", "neon": "Neon",
+}
+
+def extrair(texto):
+    t = texto.lower()
+    for p in PADROES_REC:
+        m = re.search(p, t, re.I)
+        if m:
+            try:
+                v = float(m.group(1).replace(".", "").replace(",", "."))
+                if v >= VALOR_MIN: return "Receita", v
+            except: pass
+    for p in PADROES_DES:
+        m = re.search(p, t, re.I)
+        if m:
+            try:
+                v = float(m.group(1).replace(".", "").replace(",", "."))
+                if v >= VALOR_MIN: return "Despesa", v
+            except: pass
+    return None, None
+
+def banco_do_pkg(pkg, titulo):
+    s = (pkg + " " + titulo).lower().replace(".", "").replace("_", "")
+    for k, v in BANCOS_PKG.items():
+        if k in s: return v
+    return "Automático"
+
+# ── Monitor ───────────────────────────────────────────────────────
+def monitorar(uid, token, debug=False):
+    print(f"\n🤖 Monitor ativo — UID: {uid[:8]}...")
+    print(f"   Debug: {'SIM (mostra tudo)' if debug else 'NÃO'}")
+    print("   Aguardando notificações bancárias... (Ctrl+C para parar)\n")
+
+    # Verifica permissão logo no início
+    try:
+        r = subprocess.run(["termux-notification-list"], capture_output=True, text=True, timeout=8)
+        notifs = json.loads(r.stdout or "[]")
+        print(f"   📋 {len(notifs)} notificação(ões) visível(eis) agora.")
+        if len(notifs) == 0:
+            print("\n   ⚠️  NENHUMA NOTIFICAÇÃO ENCONTRADA.")
+            print("   Verifique se concedeu permissão de notificações ao Termux:API:")
+            print("   Configurações Android → Apps → Acesso especial")
+            print("   → Acesso a notificações → Termux:API → Ativar\n")
+    except FileNotFoundError:
+        print("\n   ❌ termux-notification-list não encontrado!")
+        print("   Execute: pkg install termux-api\n")
+        exit(1)
+    except Exception as e:
+        print(f"   ⚠️  Erro ao listar notificações: {e}\n")
 
     vistos = set()
 
     while True:
         try:
-            r = subprocess.run(
-                ["termux-notification-list"],
-                capture_output=True, text=True, timeout=8,
-            )
+            r = subprocess.run(["termux-notification-list"], capture_output=True, text=True, timeout=8)
             notifs = json.loads(r.stdout or "[]")
 
             for n in notifs:
                 nid = f"{n.get('id','')}_{n.get('when',0)}"
-                if nid in vistos:
-                    continue
+                if nid in vistos: continue
                 vistos.add(nid)
 
-                titulo = str(n.get("title", "") or "")
-                corpo  = str(n.get("content", "") or n.get("body", "") or "")
-                pkg    = str(n.get("packageName", "") or "")
+                titulo = str(n.get("title","") or "")
+                corpo  = str(n.get("content","") or n.get("body","") or "")
+                pkg    = str(n.get("packageName","") or "")
                 texto  = f"{titulo} {corpo}"
 
-                tipo, valor = extrair_valor(texto)
-                if tipo and valor:
-                    banco = detectar_banco(pkg, titulo)
-                    desc  = f"{titulo}: {corpo}".strip(": ")
-                    enviar(tipo, valor, desc, banco)
+                tipo, valor = extrair(texto)
 
-            # Limpa IDs antigos para não crescer indefinidamente
-            if len(vistos) > 500:
+                if debug:
+                    print(f"[NOTIF] {pkg[:25]:25} | {texto[:70]}")
+                    if tipo:
+                        print(f"         → {tipo} R${valor:.2f}")
+
+                if tipo and valor:
+                    banco = banco_do_pkg(pkg, titulo)
+                    desc  = f"{titulo}: {corpo}".strip(": ").strip()
+                    if not debug:
+                        print(f"📲 Nova: {tipo} R${valor:.2f} — {desc[:45]}")
+                    enviar(uid, token, tipo, valor, desc, banco)
+
+            if len(vistos) > 600:
                 vistos = set(list(vistos)[-200:])
 
-        except FileNotFoundError:
-            print("⚠️  termux-notification-list não encontrado. Instale o Termux:API.")
-            time.sleep(30)
         except Exception as e:
-            pass
+            if debug: print(f"[ERR] {e}")
 
-        time.sleep(INTERVALO_SEG)
+        time.sleep(INTERVALO)
 
-
+# ── Main ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    monitorar()
+    args = sys.argv[1:]
+
+    if "--config" in args:
+        carregar_config(forcar=True)
+        exit(0)
+
+    uid, token = carregar_config()
+
+    if "--test" in args:
+        testar_webhook(uid, token)
+        exit(0)
+
+    debug = "--debug" in args
+    monitorar(uid, token, debug=debug)
