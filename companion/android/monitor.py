@@ -206,6 +206,29 @@ def monitorar(uid, token, debug=False):
         time.sleep(INTERVALO)
 
 # ── Main ──────────────────────────────────────────────────────────
+def adicionar_manual(uid, token, args):
+    """
+    Uso: python monitor.py --add tipo valor descricao
+    Ex:  python monitor.py --add Despesa 45.90 "Mercado Pix"
+         python monitor.py --add Receita 1500 "Salário"
+    """
+    idx = args.index("--add")
+    partes = args[idx+1:]
+    if len(partes) < 3:
+        print("\nUso: python monitor.py --add <Despesa|Receita> <valor> <descrição>")
+        print("Ex:  python monitor.py --add Despesa 45.90 Mercado")
+        exit(1)
+    tipo  = partes[0].capitalize()
+    if tipo not in ("Despesa", "Receita"):
+        print(f"❌ Tipo inválido: '{tipo}'. Use Despesa ou Receita."); exit(1)
+    try:
+        valor = float(partes[1].replace(",","."))
+    except:
+        print(f"❌ Valor inválido: '{partes[1]}'"); exit(1)
+    desc = " ".join(partes[2:])
+    print(f"\n📤 Enviando: {tipo} R${valor:.2f} — {desc}")
+    enviar(uid, token, tipo, valor, desc, "Manual")
+
 if __name__ == "__main__":
     args = sys.argv[1:]
 
@@ -217,6 +240,10 @@ if __name__ == "__main__":
 
     if "--test" in args:
         testar_webhook(uid, token)
+        exit(0)
+
+    if "--add" in args:
+        adicionar_manual(uid, token, args)
         exit(0)
 
     debug = "--debug" in args
