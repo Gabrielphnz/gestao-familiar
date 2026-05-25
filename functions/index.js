@@ -35,13 +35,31 @@ exports.webhook = onRequest({ cors: true, region: "us-central1", invoker: "publi
     return;
   }
 
-  const valorNum = parseFloat(String(valor).replace(",", "."));
+  // Tenta usar valor enviado; se inválido, extrai da descrição
+  let valorNum = parseFloat(String(valor).replace(",", "."));
+  let tipoNorm = tipo === "Receita" ? "Receita" : "Despesa";
+
   if (isNaN(valorNum) || valorNum <= 0) {
-    res.status(400).json({ error: "Valor inválido" });
-    return;
+    const txt = String(descricao || "").toLowerCase();
+    // Procura padrão R$ X,YZ ou R$ X.YYY,YZ
+    const m = txt.match(/r?\$?\s*(\d{1,3}(?:\.\d{3})*,\d{2})/i) || txt.match(/(\d+,\d{2})/) || txt.match(/(\d+\.\d{2})/);
+    if (m) {
+      const raw = m[1].replace(/\./g, "").replace(",", ".");
+      valorNum = parseFloat(raw);
+    }
+    // Auto-detecta tipo se não informado
+    if (!tipo) {
+      const recPalavras = ["recebeu", "recebido", "creditad", "crédito", "credito", "depósito", "deposito", "pix recebido", "estorno"];
+      const desPalavras = ["enviado", "pagamento", "compra", "débito", "debito", "cobrado", "pix enviado", "pagou", "debitado"];
+      if (recPalavras.some(p => txt.includes(p))) tipoNorm = "Receita";
+      else if (desPalavras.some(p => txt.includes(p))) tipoNorm = "Despesa";
+    }
   }
 
-  const tipoNorm = tipo === "Receita" ? "Receita" : "Despesa";
+  if (isNaN(valorNum) || valorNum <= 0) {
+    res.status(400).json({ error: "Valor inválido e não foi possível extrair da descrição" });
+    return;
+  }
   const timestamp = Date.now();
 
   const lancamento = {

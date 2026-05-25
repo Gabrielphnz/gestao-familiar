@@ -66,7 +66,7 @@
         </div>
         <nav class="space-y-2">
           <button id="nav-inicio"      class="nav-btn w-full text-blue-400 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold bg-blue-500/10"><span class="text-xl">🏠</span><span>Início</span></button>
-          <button id="nav-metas"       class="nav-btn w-full text-gray-400 hover:bg-gray-800 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold"><span class="text-xl">🎯</span><span>Metas</span></button>
+          <button id="nav-metas"       class="nav-btn w-full text-gray-400 hover:bg-gray-800 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold"><span class="text-xl">💭</span><span>Sonhos</span></button>
           <button id="nav-orcamentos"  class="nav-btn w-full text-gray-400 hover:bg-gray-800 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold"><span class="text-xl">📊</span><span>Orçamentos</span></button>
           <button id="nav-cartoes"     class="nav-btn w-full text-gray-400 hover:bg-gray-800 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold"><span class="text-xl">💳</span><span>Cartões</span></button>
           <button id="nav-recorrentes" class="nav-btn w-full text-gray-400 hover:bg-gray-800 flex items-center gap-4 py-3 px-4 rounded-xl transition font-bold"><span class="text-xl">🔁</span><span>Recorrentes</span></button>
@@ -129,13 +129,19 @@
       </div>
     </div>
 
-    <!-- TELA METAS -->
+    <!-- TELA METAS / SONHOS -->
     <div id="tela-metas" class="hidden flex-1 overflow-y-auto p-6 pt-8 pb-28 w-full relative">
-      <div class="flex items-center gap-4 mb-8">
+      <div class="flex items-center gap-4 mb-3">
         <button class="btn-abrir-menu -ml-2 p-2 text-gray-800 hover:text-blue-600 transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
-        <h2 class="text-3xl font-bold text-gray-800">Minhas Metas 🎯</h2>
+        <h2 class="text-3xl font-bold text-gray-800">Meus Sonhos 💭</h2>
+      </div>
+      <p class="text-sm text-gray-500 mb-6 -mt-1 ml-1">Transforme desejos em planos com data e valor.</p>
+      <div id="resumo-sonhos" class="hidden bg-gradient-to-br from-purple-600 to-blue-600 text-white p-5 rounded-2xl mb-5 shadow-lg">
+        <p class="text-xs font-bold uppercase tracking-widest opacity-80">Total em sonhos</p>
+        <p class="text-3xl font-bold mt-1" id="resumo-sonhos-valor">R$ 0,00</p>
+        <p class="text-xs mt-1 opacity-90" id="resumo-sonhos-desc">de R$ 0,00 — você já realizou 0%</p>
       </div>
       <div id="lista-metas" class="space-y-4"></div>
       <button id="btn-add-meta-trigger" class="fixed bottom-10 right-6 bg-gradient-to-tr from-blue-600 to-blue-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 hover:scale-105 transition-transform z-40">
@@ -372,21 +378,53 @@
     <div id="modal-meta" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
       <div class="bg-white w-full rounded-t-3xl p-6">
         <div class="flex justify-between items-center mb-6">
-          <h3 id="titulo-modal-meta" class="text-xl font-bold text-gray-800">Criar Nova Meta</h3>
+          <h3 id="titulo-modal-meta" class="text-xl font-bold text-gray-800">Novo Sonho 💭</h3>
           <button id="btn-cancelar-meta" class="text-gray-400 hover:text-red-500 font-bold text-2xl px-2">&times;</button>
         </div>
         <form id="form-meta" class="space-y-4">
           <input type="hidden" id="input-meta-id" value="">
           <input type="hidden" id="input-meta-atual-escondido" value="0">
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome da Meta</label>
-            <input type="text" id="input-meta-titulo" required placeholder="Ex: Viagem em Família..." class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Emoji do sonho</label>
+            <div class="grid grid-cols-8 gap-1.5" id="emoji-picker">
+              <button type="button" data-emoji="✈️" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">✈️</button>
+              <button type="button" data-emoji="🏠" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🏠</button>
+              <button type="button" data-emoji="🚗" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🚗</button>
+              <button type="button" data-emoji="💍" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">💍</button>
+              <button type="button" data-emoji="🎓" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🎓</button>
+              <button type="button" data-emoji="🏖️" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🏖️</button>
+              <button type="button" data-emoji="📱" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">📱</button>
+              <button type="button" data-emoji="💻" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">💻</button>
+              <button type="button" data-emoji="🚲" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🚲</button>
+              <button type="button" data-emoji="🎸" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🎸</button>
+              <button type="button" data-emoji="🐶" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🐶</button>
+              <button type="button" data-emoji="🎯" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🎯</button>
+              <button type="button" data-emoji="💰" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">💰</button>
+              <button type="button" data-emoji="🎁" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🎁</button>
+              <button type="button" data-emoji="🏥" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🏥</button>
+              <button type="button" data-emoji="🌟" class="emoji-opt text-2xl p-2 rounded-xl bg-gray-50 hover:bg-blue-100 border border-transparent">🌟</button>
+            </div>
+            <input type="hidden" id="input-meta-emoji" value="🎯">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Objetivo Final (R$)</label>
-            <input type="number" id="input-meta-alvo" step="0.01" required placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nome do sonho</label>
+            <input type="text" id="input-meta-titulo" required placeholder="Ex: Viagem em família para Disney..." class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
           </div>
-          <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg mt-4 hover:bg-blue-700">Salvar Meta</button>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Valor (R$)</label>
+              <input type="number" id="input-meta-alvo" step="0.01" required placeholder="0.00" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data alvo</label>
+              <input type="date" id="input-meta-prazo" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Por que esse sonho importa? (opcional)</label>
+            <textarea id="input-meta-motivacao" rows="2" placeholder="Ex: levar minha família para conhecer o mar pela primeira vez..." class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm resize-none"></textarea>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-4 rounded-xl shadow-lg mt-4">💫 Salvar Sonho</button>
         </form>
       </div>
     </div>
@@ -479,6 +517,44 @@
       </div>
     </div>
 
+    <!-- MODAL DASHBOARD PÓS-IMPORT -->
+    <div id="modal-dashboard-import" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+      <div class="bg-white w-full rounded-t-3xl p-6 overflow-y-auto max-h-[95vh]">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-800">Importação concluída ✨</h3>
+          <button id="btn-fechar-dashboard" class="text-gray-400 hover:text-red-500 font-bold text-2xl px-2">&times;</button>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 mb-4">
+          <div class="bg-blue-50 p-3 rounded-xl text-center">
+            <p class="text-[10px] text-blue-700 font-bold uppercase">Importadas</p>
+            <p class="text-xl font-bold text-blue-700" id="dash-total-qtd">0</p>
+          </div>
+          <div class="bg-red-50 p-3 rounded-xl text-center">
+            <p class="text-[10px] text-red-700 font-bold uppercase">Despesas</p>
+            <p class="text-base font-bold text-red-700" id="dash-total-des">R$ 0</p>
+          </div>
+          <div class="bg-green-50 p-3 rounded-xl text-center">
+            <p class="text-[10px] text-green-700 font-bold uppercase">Receitas</p>
+            <p class="text-base font-bold text-green-700" id="dash-total-rec">R$ 0</p>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
+          <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">Gastos por Categoria</h4>
+          <div class="max-w-[200px] mx-auto"><canvas id="dash-grafico"></canvas></div>
+          <ul id="dash-legenda" class="mt-3 space-y-1.5"></ul>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-4 mb-4">
+          <h4 class="text-xs font-bold text-gray-500 uppercase mb-3">🔥 Top 5 Maiores Gastos</h4>
+          <ul id="dash-top5" class="space-y-2"></ul>
+        </div>
+
+        <button id="btn-concluir-dashboard" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700">Ir para o app</button>
+      </div>
+    </div>
+
     <!-- MODAL IMPORTAR EXTRATO -->
     <div id="modal-importar" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
       <div class="bg-white w-full rounded-t-3xl p-6 overflow-y-auto max-h-[95vh]">
@@ -525,6 +601,8 @@
           </div>
 
           <ul id="import-lista" class="space-y-2 mb-4 max-h-[40vh] overflow-y-auto"></ul>
+
+          <button id="btn-adicionar-mais-arquivo" class="w-full bg-blue-50 text-blue-700 font-bold text-xs py-2.5 rounded-xl mb-3 hover:bg-blue-100 border border-dashed border-blue-300">+ Adicionar outro arquivo (para balancear)</button>
 
           <div class="flex gap-3">
             <button id="btn-voltar-upload" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">Voltar</button>
@@ -679,6 +757,8 @@
 
     document.getElementById('input-arquivo-extrato').addEventListener('change', async e => {
       const file = e.target.files[0]; if (!file) return;
+      const append = e.target.dataset.append === '1';
+      e.target.dataset.append = '';
       const reader = new FileReader();
       reader.onload = () => {
         const text = reader.result;
@@ -689,7 +769,16 @@
           else parsed = parseCSV(text);
         } catch(err) { mostrarToast('Erro ao ler', err.message, 'error'); return; }
         if (!parsed.length) { mostrarToast('Nenhuma transação', 'Não consegui extrair dados deste arquivo.', 'warning'); return; }
-        importTransacoes = detectarDuplicatas(parsed);
+        const novas = detectarDuplicatas(parsed);
+        if (append && importTransacoes.length) {
+          // Evita duplicar entre arquivos
+          const existentes = new Set(importTransacoes.map(hashTransacao));
+          const filtradas = novas.filter(n => !existentes.has(hashTransacao(n)));
+          importTransacoes = importTransacoes.concat(filtradas);
+          mostrarToast('Arquivo adicionado', `+${filtradas.length} novas, ${novas.length - filtradas.length} já estavam.`, 'success');
+        } else {
+          importTransacoes = novas;
+        }
         document.getElementById('import-etapa-upload').classList.add('hidden');
         document.getElementById('import-etapa-preview').classList.remove('hidden');
         renderizarPreviewImport();
@@ -706,27 +795,97 @@
       renderizarPreviewImport();
     });
 
+    document.getElementById('btn-adicionar-mais-arquivo').addEventListener('click', () => {
+      // mantém preview e adiciona mais
+      const inp = document.getElementById('input-arquivo-extrato');
+      inp.dataset.append = '1';
+      inp.click();
+    });
+
     document.getElementById('btn-confirmar-importar').addEventListener('click', async () => {
-      const banco = document.getElementById('import-banco-padrao').value || 'Importado';
-      const cat   = document.getElementById('import-categoria-padrao').value || '📥 Importado';
-      const sel   = importTransacoes.filter(t => t.checked);
+      const banco   = document.getElementById('import-banco-padrao').value || 'Importado';
+      const catPad  = document.getElementById('import-categoria-padrao').value;
+      const sel     = importTransacoes.filter(t => t.checked);
       if (!sel.length) { mostrarToast('Nada selecionado', 'Marque pelo menos 1 transação.', 'warning'); return; }
       const btn = document.getElementById('btn-confirmar-importar');
       btn.disabled = true; btn.innerText = `Importando 0/${sel.length}...`;
+      const importadas = [];
       let n = 0;
       for (const t of sel) {
-        const ts = t.timestamp + (n % 1000); // evita colisão de ID
-        await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/lancamentos`, String(ts)), {
-          tipo: t.tipo, valor: t.valor, categoria: cat, banco,
-          texto: t.texto, timestamp: t.timestamp, fonte: 'import'
-        });
+        const ts = t.timestamp + (n % 1000);
+        const cat = t.categoria || catPad || t.categoriaSugerida || '📥 Importado';
+        const item = { tipo: t.tipo, valor: t.valor, categoria: cat, banco, texto: t.texto, timestamp: t.timestamp, fonte: 'import' };
+        await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/lancamentos`, String(ts)), item);
+        importadas.push(item);
         n++;
         if (n % 5 === 0) btn.innerText = `Importando ${n}/${sel.length}...`;
       }
       btn.innerText = `Importar`; btn.disabled = false;
       document.getElementById('modal-importar').classList.add('hidden');
-      mostrarToast('Importação concluída!', `${n} lançamento(s) adicionados.`, 'success');
+      mostrarDashboardImport(importadas);
     });
+
+    // ── DASHBOARD PÓS-IMPORT ─────────────────────────────────────
+    let dashChart = null;
+    function mostrarDashboardImport(items) {
+      const totalRec = items.filter(i => i.tipo==='Receita').reduce((a,i) => a+i.valor, 0);
+      const totalDes = items.filter(i => i.tipo==='Despesa').reduce((a,i) => a+i.valor, 0);
+      document.getElementById('dash-total-qtd').innerText = items.length;
+      document.getElementById('dash-total-rec').innerText = 'R$ ' + totalRec.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      document.getElementById('dash-total-des').innerText = 'R$ ' + totalDes.toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+      // Agrupa por categoria (só despesas)
+      const porCat = {};
+      items.filter(i => i.tipo==='Despesa').forEach(i => {
+        porCat[i.categoria] = (porCat[i.categoria]||0) + i.valor;
+      });
+      const ordenado = Object.entries(porCat).sort((a,b) => b[1]-a[1]);
+      const labels = ordenado.map(e => e[0]);
+      const data   = ordenado.map(e => e[1]);
+      const cores  = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#6366f1','#14b8a6','#f97316','#a855f7'];
+
+      // Gráfico
+      const ctx = document.getElementById('dash-grafico');
+      if (dashChart) dashChart.destroy();
+      if (data.length > 0) {
+        dashChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: { labels, datasets: [{ data, backgroundColor: cores, borderWidth: 0 }] },
+          options: { cutout: '70%', plugins: { legend: { display: false } } }
+        });
+      }
+      // Legenda manual
+      const leg = document.getElementById('dash-legenda');
+      leg.innerHTML = '';
+      ordenado.forEach(([cat, val], i) => {
+        const pct = totalDes > 0 ? (val/totalDes*100).toFixed(0) : 0;
+        leg.innerHTML += `<li class="flex justify-between items-center text-xs">
+          <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm" style="background:${cores[i%cores.length]}"></span><span class="font-semibold text-gray-700">${cat}</span></span>
+          <span class="font-bold text-gray-700">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})} <span class="text-gray-400">(${pct}%)</span></span>
+        </li>`;
+      });
+
+      // Top 5 maiores
+      const top = [...items].filter(i => i.tipo==='Despesa').sort((a,b) => b.valor - a.valor).slice(0, 5);
+      const top5 = document.getElementById('dash-top5');
+      top5.innerHTML = '';
+      top.forEach((t, i) => {
+        const emoji = getEmoji(t.categoria);
+        const [bg, fg] = getCatColor(t.categoria);
+        top5.innerHTML += `<li class="flex items-center gap-3">
+          <div class="w-9 h-9 ${bg} rounded-xl flex items-center justify-center text-base overflow-hidden">${emoji}</div>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-xs text-gray-800 truncate">${t.texto}</p>
+            <p class="text-[10px] ${fg} font-semibold">${t.categoria}</p>
+          </div>
+          <p class="font-bold text-sm text-red-600 whitespace-nowrap">R$ ${t.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+        </li>`;
+      });
+
+      document.getElementById('modal-dashboard-import').classList.remove('hidden');
+    }
+    document.getElementById('btn-fechar-dashboard').onclick   = () => document.getElementById('modal-dashboard-import').classList.add('hidden');
+    document.getElementById('btn-concluir-dashboard').onclick = () => document.getElementById('modal-dashboard-import').classList.add('hidden');
 
     document.getElementById('btn-copiar-cmd-android').addEventListener('click', () => {
       copiarTexto('pkg install -y python termux-api && pip install requests', document.getElementById('btn-copiar-cmd-android'), '📋 Copiar comando de instalação');
@@ -853,6 +1012,33 @@
       return out;
     }
 
+    // Sugere categoria a partir do texto da transação
+    const CATEGORIA_KW = {
+      '🛒 Mercado':      ['mercado','supermercado','carrefour','pao de acucar','pão de açúcar','extra','assai','assaí','sams','atacadao','atacadão','hortifruti','padaria'],
+      '🍔 Alimentação':  ['ifood','rappi','uber eats','restaurante','lanchonete','mcdonald','burger','pizzaria','sushi','outback','subway'],
+      '🚗 Transporte':   ['uber','99app','99 ','taxi','cabify','99pop','onibus','ônibus','metro','metrô','bilhete','pedagio','pedágio','estacionamento'],
+      '⛽ Combustível':  ['posto','shell','ipiranga','petrobras','combustivel','combustível','gasolina','etanol','diesel'],
+      '📺 Streaming':    ['netflix','spotify','amazon prime','disney','globoplay','hbo','youtube premium','deezer','apple music'],
+      '🏠 Moradia':      ['aluguel','condominio','condomínio','iptu','cemig','enel','sabesp','comgas','agua','água','luz','gas','gás'],
+      '💊 Saúde':        ['farmacia','farmácia','drogaria','drogasil','unimed','amil','hospital','medico','médico','consulta','exame','clinica','clínica'],
+      '🎮 Lazer':        ['cinema','teatro','show','ingresso','parque','steam','playstation','xbox','nintendo'],
+      '👕 Vestuário':    ['renner','cea','c&a','riachuelo','zara','hering','calcado','calçado','sapato','roupa'],
+      '📚 Educação':     ['udemy','coursera','escola','curso','faculdade','livro','livraria','alura'],
+      '📡 Internet/Tel': ['vivo','claro','tim','oi telecom','internet','celular','telefone'],
+      '💰 Salário':      ['salario','salário','pagamento recebido','transferencia recebida','holerite','folha'],
+      '💳 Fatura Cartão':['fatura','pagamento cartao','pagamento cartão'],
+    };
+
+    function sugerirCategoria(texto) {
+      const t = (texto || '').toLowerCase();
+      for (const [cat, kws] of Object.entries(CATEGORIA_KW)) {
+        for (const kw of kws) {
+          if (t.includes(kw)) return cat;
+        }
+      }
+      return null;
+    }
+
     function hashTransacao(t) {
       const d = new Date(t.timestamp);
       return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${t.valor.toFixed(2)}_${(t.texto||'').toLowerCase().slice(0,20)}`;
@@ -860,7 +1046,12 @@
 
     function detectarDuplicatas(novas) {
       const existentes = new Set(cacheLancs.map(hashTransacao));
-      return novas.map(n => ({ ...n, dup: existentes.has(hashTransacao(n)), checked: !existentes.has(hashTransacao(n)) }));
+      return novas.map(n => ({
+        ...n,
+        dup: existentes.has(hashTransacao(n)),
+        checked: !existentes.has(hashTransacao(n)),
+        categoriaSugerida: sugerirCategoria(n.texto)
+      }));
     }
 
     function abrirImportar() {
@@ -872,6 +1063,10 @@
 
     function renderizarPreviewImport() {
       const lista = document.getElementById('import-lista');
+      // Categorias disponíveis: as do usuário + as sugeridas pelas keywords (auto-merge)
+      const todasCats = new Set([...(cacheConfig.categorias||[]), ...Object.keys(CATEGORIA_KW)]);
+      const optsCat = [...todasCats].map(c => `<option value="${c}">${c}</option>`).join('');
+
       lista.innerHTML = '';
       importTransacoes.forEach((t, i) => {
         const dt = new Date(t.timestamp);
@@ -879,14 +1074,25 @@
         const corVal = t.tipo === 'Receita' ? 'text-green-600' : 'text-gray-800';
         const sinal = t.tipo === 'Receita' ? '+' : '-';
         const bgDup = t.dup ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-100';
+        const catEscolhida = t.categoria || t.categoriaSugerida || '';
+        const badgeSug = (!t.categoria && t.categoriaSugerida) ? `<span class="text-[9px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.5 rounded">✨ sugerido</span>` : '';
         lista.innerHTML += `
-          <li class="${bgDup} border p-3 rounded-xl flex items-center gap-3">
-            <input type="checkbox" data-idx="${i}" class="import-check w-5 h-5 text-blue-600 rounded" ${t.checked ? 'checked' : ''}>
-            <div class="flex-1 min-w-0">
-              <p class="font-bold text-sm text-gray-800 truncate">${t.texto}</p>
-              <p class="text-[10px] text-gray-500 font-medium">${dStr} ${t.dup ? '• <span class="text-amber-700 font-bold">⚠ duplicado</span>' : ''}</p>
+          <li class="${bgDup} border p-3 rounded-xl">
+            <div class="flex items-center gap-3 mb-2">
+              <input type="checkbox" data-idx="${i}" class="import-check w-5 h-5 text-blue-600 rounded" ${t.checked ? 'checked' : ''}>
+              <div class="flex-1 min-w-0">
+                <p class="font-bold text-sm text-gray-800 truncate">${t.texto}</p>
+                <p class="text-[10px] text-gray-500 font-medium">${dStr} ${t.dup ? '• <span class="text-amber-700 font-bold">⚠ duplicado</span>' : ''}</p>
+              </div>
+              <p class="font-bold ${corVal} text-sm whitespace-nowrap">${sinal} R$ ${t.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
             </div>
-            <p class="font-bold ${corVal} text-sm whitespace-nowrap">${sinal} R$ ${t.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+            <div class="flex items-center gap-2 pl-8">
+              ${badgeSug}
+              <select data-idx="${i}" class="import-cat flex-1 p-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-blue-500">
+                <option value="">— sem categoria —</option>
+                ${optsCat.replace(`value="${catEscolhida}"`, `value="${catEscolhida}" selected`)}
+              </select>
+            </div>
           </li>`;
       });
       document.querySelectorAll('.import-check').forEach(c => {
@@ -895,13 +1101,18 @@
           atualizarContadorImport();
         });
       });
+      document.querySelectorAll('.import-cat').forEach(s => {
+        s.addEventListener('change', e => {
+          importTransacoes[+e.target.dataset.idx].categoria = e.target.value;
+        });
+      });
       // Popula selects
       const selB = document.getElementById('import-banco-padrao'); selB.innerHTML = '';
       (cacheConfig.bancos||[]).forEach(b => selB.innerHTML += `<option value="${b}">${b}</option>`);
       (cacheConfig.cartoes||[]).forEach(c => selB.innerHTML += `<option value="${c.nome}">${c.nome} (cartão)</option>`);
       const selC = document.getElementById('import-categoria-padrao'); selC.innerHTML = '';
-      selC.innerHTML = '<option value="📥 Importado">📥 Importado</option>';
-      (cacheConfig.categorias||[]).forEach(c => selC.innerHTML += `<option value="${c}">${c}</option>`);
+      selC.innerHTML = '<option value="">📥 Usar sugerida (ou Importado)</option>';
+      [...todasCats].forEach(c => selC.innerHTML += `<option value="${c}">${c}</option>`);
       atualizarContadorImport();
     }
 
@@ -1163,7 +1374,28 @@
       document.getElementById('input-meta-titulo').value = titulo;
       document.getElementById('input-meta-alvo').value = alvo;
       document.getElementById('input-meta-atual-escondido').value = atual;
-      document.getElementById('titulo-modal-meta').innerText = 'Editar Meta';
+      document.getElementById('titulo-modal-meta').innerText = 'Editar Sonho 💭';
+      document.getElementById('modal-meta').classList.remove('hidden');
+    };
+    window.editarMetaCompleta = (m) => {
+      document.getElementById('input-meta-id').value = m.id;
+      document.getElementById('input-meta-titulo').value = m.titulo;
+      document.getElementById('input-meta-alvo').value = m.alvo;
+      document.getElementById('input-meta-atual-escondido').value = m.atual || 0;
+      document.getElementById('input-meta-emoji').value = m.emoji || '🎯';
+      document.getElementById('input-meta-motivacao').value = m.motivacao || '';
+      if (m.prazo) {
+        const d = new Date(m.prazo);
+        document.getElementById('input-meta-prazo').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      } else {
+        document.getElementById('input-meta-prazo').value = '';
+      }
+      // Marca emoji selecionado
+      document.querySelectorAll('.emoji-opt').forEach(b => {
+        b.classList.toggle('bg-blue-100', b.dataset.emoji === (m.emoji || '🎯'));
+        b.classList.toggle('border-blue-400', b.dataset.emoji === (m.emoji || '🎯'));
+      });
+      document.getElementById('titulo-modal-meta').innerText = 'Editar Sonho 💭';
       document.getElementById('modal-meta').classList.remove('hidden');
     };
     window.abrirModalSaldo = (id, atual) => {
@@ -1304,12 +1536,30 @@
       document.getElementById('modal-novo').classList.add('hidden');
     };
 
+    // Emoji picker do sonho
+    document.querySelectorAll('.emoji-opt').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.emoji-opt').forEach(b => b.classList.remove('bg-blue-100','border-blue-400'));
+        btn.classList.add('bg-blue-100','border-blue-400');
+        document.getElementById('input-meta-emoji').value = btn.dataset.emoji;
+      });
+    });
+
     document.getElementById('form-meta').onsubmit = async e => {
       e.preventDefault();
       const id = document.getElementById('input-meta-id').value;
-      const dados = { titulo: document.getElementById('input-meta-titulo').value, alvo: parseFloat(document.getElementById('input-meta-alvo').value), atual: parseFloat(document.getElementById('input-meta-atual-escondido').value)||0, timestamp: Date.now() };
+      const prazoStr = document.getElementById('input-meta-prazo').value;
+      const dados = {
+        titulo:     document.getElementById('input-meta-titulo').value,
+        alvo:       parseFloat(document.getElementById('input-meta-alvo').value),
+        atual:      parseFloat(document.getElementById('input-meta-atual-escondido').value) || 0,
+        emoji:      document.getElementById('input-meta-emoji').value || '🎯',
+        motivacao:  document.getElementById('input-meta-motivacao').value || '',
+        prazo:      prazoStr ? new Date(prazoStr + 'T12:00:00').getTime() : null,
+        timestamp:  Date.now()
+      };
       if (id) await updateDoc(doc(db, `usuarios/${usuarioAtual.uid}/metas`, id), dados);
-      else await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/metas`, Date.now().toString()), dados);
+      else    await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/metas`, Date.now().toString()), dados);
       document.getElementById('modal-meta').classList.add('hidden');
     };
 
@@ -1416,29 +1666,101 @@
       inscricaoMetas = onSnapshot(query(collection(db, `usuarios/${uid}/metas`), orderBy('timestamp','asc')), snap => {
         const lista = document.getElementById('lista-metas'); lista.innerHTML = '';
         const agora = Date.now();
-        snap.forEach(d => {
-          const m = d.data();
+        const frases = [
+          'Cada centavo guardado é um passo a mais. 💪',
+          'Seu eu do futuro vai agradecer. ✨',
+          'Disciplina hoje é liberdade amanhã. 🚀',
+          'Pequenos passos, grandes conquistas. 🌱',
+          'A jornada parece longa, mas você está mais perto do que pensa. 🌟',
+          'Sonhar é grátis, realizar é estratégia. 🎯',
+          'Quem planeja, conquista. 💎'
+        ];
+        let totalAtual = 0, totalAlvo = 0;
+        const metas = [];
+        snap.forEach(d => { metas.push({id: d.id, ...d.data()}); totalAtual += d.data().atual||0; totalAlvo += d.data().alvo||0; });
+
+        // Header resumo
+        const resumo = document.getElementById('resumo-sonhos');
+        if (metas.length) {
+          resumo.classList.remove('hidden');
+          document.getElementById('resumo-sonhos-valor').innerText = 'R$ ' + totalAtual.toLocaleString('pt-BR',{minimumFractionDigits:2});
+          const pctG = totalAlvo > 0 ? Math.round(totalAtual/totalAlvo*100) : 0;
+          document.getElementById('resumo-sonhos-desc').innerText = `de R$ ${totalAlvo.toLocaleString('pt-BR',{minimumFractionDigits:2})} — você já realizou ${pctG}%`;
+        } else {
+          resumo.classList.add('hidden');
+          lista.innerHTML = `<div class="text-center py-16 text-gray-400">
+            <p class="text-6xl mb-4">💭</p>
+            <p class="font-bold text-gray-600 text-lg">Comece pelo seu primeiro sonho</p>
+            <p class="text-sm mt-2 max-w-xs mx-auto">O que você gostaria de conquistar? Uma viagem, um curso, uma casa? Defina o valor e o prazo — a gente cuida do resto.</p>
+          </div>`;
+          return;
+        }
+
+        metas.forEach((m, idx) => {
           const pct = Math.min(100, Math.round((m.atual/m.alvo)*100));
           const msPorMes = 1000*60*60*24*30.44;
           let mesesP = (agora - m.timestamp) / msPorMes; if (mesesP < 1) mesesP = 1;
           const media = m.atual / mesesP;
           const falta = m.alvo - m.atual;
+          const emoji = m.emoji || '🎯';
+
+          // Cálculo de "quanto guardar por mês" pela data alvo
+          let porMes = null, diasFalt = null, statusPrazo = '';
+          if (m.prazo && falta > 0) {
+            diasFalt = Math.ceil((m.prazo - agora) / 86400000);
+            const mesesFalt = Math.max(1, diasFalt / 30.44);
+            porMes = falta / mesesFalt;
+            if (diasFalt < 0) statusPrazo = `<span class="text-red-600 font-bold">⏰ atrasado ${Math.abs(diasFalt)}d</span>`;
+            else if (diasFalt < 30) statusPrazo = `<span class="text-amber-600 font-bold">⏳ ${diasFalt} dias</span>`;
+            else statusPrazo = `<span class="text-gray-500">${diasFalt} dias restantes</span>`;
+          }
           let prev = '---';
-          if (media > 0 && falta > 0) prev = Math.ceil(falta/media) + ' meses';
-          else if (falta <= 0) prev = 'Concluída! 🎉';
+          if (media > 0 && falta > 0) prev = Math.ceil(falta/media) + ' meses no ritmo atual';
+          else if (falta <= 0) prev = '🎉 Sonho realizado!';
+
+          const frase = frases[(idx + Math.floor(agora/86400000)) % frases.length];
+
+          const corBarra = pct >= 100 ? 'from-green-500 to-emerald-400' : pct >= 75 ? 'from-blue-500 to-cyan-400' : pct >= 40 ? 'from-purple-500 to-pink-400' : 'from-pink-500 to-rose-400';
+          const corCard = pct >= 100 ? 'from-green-50 to-emerald-50 border-green-200' : 'from-purple-50 to-blue-50 border-purple-100';
+
+          const motivacao = m.motivacao ? `<p class="text-xs italic text-gray-600 mt-2 leading-snug">"${m.motivacao}"</p>` : '';
+
           lista.innerHTML += `
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4 relative">
-              <div class="absolute top-3 right-3 flex gap-3 text-sm">
-                <button onclick="abrirModalSaldo('${d.id}',${m.atual})" class="text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded-md">R$</button>
-                <button onclick="editarMeta('${d.id}','${m.titulo}',${m.alvo},${m.atual})" class="text-gray-400 hover:text-blue-500">✏️</button>
-                <button onclick="excluirMeta('${d.id}')" class="text-gray-400 hover:text-red-500">🗑️</button>
+            <div class="bg-gradient-to-br ${corCard} p-5 rounded-2xl shadow-sm border mb-4 relative">
+              <div class="absolute top-3 right-3 flex gap-2 text-sm">
+                <button onclick="abrirModalSaldo('${m.id}',${m.atual})" class="text-white font-bold bg-gradient-to-r from-purple-600 to-blue-600 px-3 py-1.5 rounded-lg shadow text-xs">+ R$</button>
+                <button onclick='editarMetaCompleta(${JSON.stringify(m).replace(/'/g,"&apos;")})' class="text-gray-400 hover:text-blue-500">✏️</button>
+                <button onclick="excluirMeta('${m.id}')" class="text-gray-400 hover:text-red-500">🗑️</button>
               </div>
-              <div class="pr-20 mb-3"><h3 class="font-bold text-gray-800 text-lg">${m.titulo}</h3><span class="text-xs font-bold text-blue-600">R$ ${m.atual.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${m.alvo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
-              <div class="w-full bg-gray-100 rounded-full h-3.5"><div class="bg-gradient-to-r from-blue-500 to-blue-400 h-3.5 rounded-full" style="width:${pct}%"></div></div>
-              <div class="flex gap-2 mt-4">
-                <div class="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded-lg flex-1 text-center font-semibold">Média: R$ ${media.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>
-                <div class="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded-lg flex-1 text-center font-semibold">Previsão: ${prev}</div>
+              <div class="flex items-start gap-3 pr-28 mb-3">
+                <div class="text-4xl">${emoji}</div>
+                <div class="min-w-0">
+                  <h3 class="font-bold text-gray-800 text-lg leading-tight truncate">${m.titulo}</h3>
+                  <p class="text-xs font-semibold text-purple-700 mt-0.5">${pct}% conquistado</p>
+                </div>
               </div>
+              ${motivacao}
+              <div class="mt-3">
+                <div class="flex justify-between text-[11px] font-bold text-gray-600 mb-1">
+                  <span>R$ ${m.atual.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+                  <span class="text-gray-400">R$ ${m.alvo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+                </div>
+                <div class="w-full bg-white/60 rounded-full h-3.5 overflow-hidden">
+                  <div class="bg-gradient-to-r ${corBarra} h-3.5 rounded-full transition-all duration-700" style="width:${pct}%"></div>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-2 mt-4">
+                <div class="bg-white/70 px-3 py-2 rounded-xl text-center">
+                  <p class="text-[9px] font-bold text-gray-500 uppercase">Faltam</p>
+                  <p class="text-sm font-bold text-gray-800">R$ ${falta > 0 ? falta.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '0,00'}</p>
+                </div>
+                <div class="bg-white/70 px-3 py-2 rounded-xl text-center">
+                  <p class="text-[9px] font-bold text-gray-500 uppercase">${porMes !== null ? 'Guarde/mês' : 'Previsão'}</p>
+                  <p class="text-sm font-bold text-gray-800">${porMes !== null ? 'R$ ' + porMes.toLocaleString('pt-BR',{minimumFractionDigits:2}) : prev}</p>
+                </div>
+              </div>
+              ${statusPrazo ? `<div class="mt-2 text-[11px] text-center">${statusPrazo}</div>` : ''}
+              <p class="text-[10px] text-center text-gray-500 italic mt-3">${frase}</p>
             </div>`;
         });
       });
