@@ -244,6 +244,14 @@
         <p class="text-[10px] text-gray-400 mt-2 text-center">⚠️ Gerar novo token invalida o anterior imediatamente.</p>
       </div>
 
+      <!-- IMPORTAR EXTRATO -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Importar Extrato <span class="text-lg">📥</span></h3>
+        <p class="text-xs text-gray-500 mb-3">Importe extratos OFX ou CSV do banco/cartão. Detecta duplicatas automaticamente.</p>
+        <button id="btn-abrir-importar" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm">📊 Importar arquivo (.ofx ou .csv)</button>
+        <p class="text-[10px] text-gray-400 mt-2 text-center">Suporta: Nubank, Itaú, Bradesco, Inter, C6, Santander, BB</p>
+      </div>
+
       <!-- ANDROID -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
         <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Monitor Android <span class="text-lg">🤖</span></h3>
@@ -471,6 +479,61 @@
       </div>
     </div>
 
+    <!-- MODAL IMPORTAR EXTRATO -->
+    <div id="modal-importar" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center">
+      <div class="bg-white w-full rounded-t-3xl p-6 overflow-y-auto max-h-[95vh]">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold text-gray-800">Importar Extrato 📥</h3>
+          <button id="btn-cancelar-importar" class="text-gray-400 hover:text-red-500 font-bold text-2xl px-2">&times;</button>
+        </div>
+
+        <!-- Etapa 1: Upload -->
+        <div id="import-etapa-upload">
+          <p class="text-sm text-gray-600 mb-4">Exporte o extrato pelo app/site do banco no formato <b>OFX</b> ou <b>CSV</b>, e envie para o celular.</p>
+          <input type="file" id="input-arquivo-extrato" accept=".ofx,.csv,.txt,.qfx" class="hidden">
+          <button onclick="document.getElementById('input-arquivo-extrato').click()" class="w-full bg-blue-50 border-2 border-dashed border-blue-300 text-blue-700 font-bold py-8 rounded-xl hover:bg-blue-100 transition">
+            📁 Toque para selecionar arquivo
+          </button>
+          <div class="mt-6 bg-amber-50 p-4 rounded-xl text-xs text-amber-800">
+            <p class="font-bold mb-1">Como exportar:</p>
+            <p>• <b>Nubank cartão:</b> app → fatura → ⋮ → Exportar CSV</p>
+            <p>• <b>Itaú/Bradesco:</b> site → extrato → exportar OFX</p>
+            <p>• <b>Inter:</b> app → extrato → compartilhar OFX</p>
+            <p>• <b>C6:</b> app → conta → extrato → exportar</p>
+          </div>
+        </div>
+
+        <!-- Etapa 2: Preview -->
+        <div id="import-etapa-preview" class="hidden">
+          <div class="flex gap-3 mb-4">
+            <div class="flex-1">
+              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Conta/Cartão</label>
+              <select id="import-banco-padrao" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-blue-500"></select>
+            </div>
+            <div class="flex-1">
+              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoria</label>
+              <select id="import-categoria-padrao" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-blue-500"></select>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mb-3 px-1">
+            <span class="text-xs font-bold text-gray-600"><span id="import-contador">0</span> selecionada(s)</span>
+            <div class="flex gap-2">
+              <button id="btn-marcar-todas" class="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">Todas</button>
+              <button id="btn-desmarcar-todas" class="text-[11px] font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-md">Nenhuma</button>
+            </div>
+          </div>
+
+          <ul id="import-lista" class="space-y-2 mb-4 max-h-[40vh] overflow-y-auto"></ul>
+
+          <div class="flex gap-3">
+            <button id="btn-voltar-upload" class="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200">Voltar</button>
+            <button id="btn-confirmar-importar" class="flex-[2] bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700">Importar <span id="import-contador-btn">0</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /app-principal -->
 
   <script type="module">
@@ -609,6 +672,62 @@
       btn.innerText = '⚡ Gerar Novo Token'; btn.disabled = false;
     });
 
+    // ── HANDLERS DE IMPORTAÇÃO ───────────────────────────────────
+    document.getElementById('btn-abrir-importar').addEventListener('click', abrirImportar);
+    document.getElementById('btn-cancelar-importar').addEventListener('click', () => document.getElementById('modal-importar').classList.add('hidden'));
+    document.getElementById('btn-voltar-upload').addEventListener('click', abrirImportar);
+
+    document.getElementById('input-arquivo-extrato').addEventListener('change', async e => {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = reader.result;
+        const ext = (file.name.split('.').pop()||'').toLowerCase();
+        let parsed = [];
+        try {
+          if (ext === 'ofx' || ext === 'qfx' || text.includes('<STMTTRN>')) parsed = parseOFX(text);
+          else parsed = parseCSV(text);
+        } catch(err) { mostrarToast('Erro ao ler', err.message, 'error'); return; }
+        if (!parsed.length) { mostrarToast('Nenhuma transação', 'Não consegui extrair dados deste arquivo.', 'warning'); return; }
+        importTransacoes = detectarDuplicatas(parsed);
+        document.getElementById('import-etapa-upload').classList.add('hidden');
+        document.getElementById('import-etapa-preview').classList.remove('hidden');
+        renderizarPreviewImport();
+      };
+      reader.readAsText(file, 'utf-8');
+    });
+
+    document.getElementById('btn-marcar-todas').addEventListener('click', () => {
+      importTransacoes.forEach(t => t.checked = true);
+      renderizarPreviewImport();
+    });
+    document.getElementById('btn-desmarcar-todas').addEventListener('click', () => {
+      importTransacoes.forEach(t => t.checked = false);
+      renderizarPreviewImport();
+    });
+
+    document.getElementById('btn-confirmar-importar').addEventListener('click', async () => {
+      const banco = document.getElementById('import-banco-padrao').value || 'Importado';
+      const cat   = document.getElementById('import-categoria-padrao').value || '📥 Importado';
+      const sel   = importTransacoes.filter(t => t.checked);
+      if (!sel.length) { mostrarToast('Nada selecionado', 'Marque pelo menos 1 transação.', 'warning'); return; }
+      const btn = document.getElementById('btn-confirmar-importar');
+      btn.disabled = true; btn.innerText = `Importando 0/${sel.length}...`;
+      let n = 0;
+      for (const t of sel) {
+        const ts = t.timestamp + (n % 1000); // evita colisão de ID
+        await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/lancamentos`, String(ts)), {
+          tipo: t.tipo, valor: t.valor, categoria: cat, banco,
+          texto: t.texto, timestamp: t.timestamp, fonte: 'import'
+        });
+        n++;
+        if (n % 5 === 0) btn.innerText = `Importando ${n}/${sel.length}...`;
+      }
+      btn.innerText = `Importar`; btn.disabled = false;
+      document.getElementById('modal-importar').classList.add('hidden');
+      mostrarToast('Importação concluída!', `${n} lançamento(s) adicionados.`, 'success');
+    });
+
     document.getElementById('btn-copiar-cmd-android').addEventListener('click', () => {
       copiarTexto('pkg install -y python termux-api && pip install requests', document.getElementById('btn-copiar-cmd-android'), '📋 Copiar comando de instalação');
     });
@@ -662,6 +781,135 @@
       } catch { alert('Erro ao ler imagem. Verifique se a foto está nítida.'); }
       finally { btn.innerText = 'Fotografar'; btn.disabled = false; e.target.value = ''; }
     });
+
+    // ── IMPORTAÇÃO DE EXTRATO ────────────────────────────────────
+    let importTransacoes = [];
+
+    function parseOFX(text) {
+      const out = [];
+      const blocks = text.split(/<STMTTRN>/i).slice(1);
+      for (const b of blocks) {
+        const dt   = (b.match(/<DTPOSTED>([^<\r\n]+)/i) || [])[1];
+        const val  = (b.match(/<TRNAMT>([^<\r\n]+)/i)   || [])[1];
+        const mem  = (b.match(/<MEMO>([^<\r\n]+)/i)     || [])[1] || '';
+        const name = (b.match(/<NAME>([^<\r\n]+)/i)     || [])[1] || '';
+        if (!dt || !val) continue;
+        const y = +dt.substr(0,4), m = +dt.substr(4,2), d = +dt.substr(6,2);
+        if (!y || !m || !d) continue;
+        const vNum = parseFloat(val);
+        if (isNaN(vNum) || vNum === 0) continue;
+        out.push({
+          tipo: vNum >= 0 ? 'Receita' : 'Despesa',
+          valor: Math.abs(vNum),
+          texto: (mem || name || 'Importado').trim(),
+          timestamp: new Date(y, m-1, d, 12, 0, 0).getTime()
+        });
+      }
+      return out;
+    }
+
+    function parseCSV(text) {
+      const linhas = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+      if (!linhas.length) return [];
+      const sep = (linhas[0].match(/;/g)||[]).length > (linhas[0].match(/,/g)||[]).length ? ';' : ',';
+      const header = linhas[0].toLowerCase();
+      const temHeader = /data|date|valor|amount|descricao|descrição|title|hist/.test(header);
+      let iData=0, iDesc=1, iValor=2;
+      if (temHeader) {
+        const cols = linhas[0].split(sep).map(c => c.toLowerCase().trim().replace(/^"|"$/g,''));
+        const fi = (re) => cols.findIndex(c => re.test(c));
+        iData  = Math.max(0, fi(/^data$|^date$|^dt/));
+        iDesc  = Math.max(0, fi(/descri|title|hist|memo|estabelec/));
+        iValor = Math.max(0, fi(/valor|amount|montante|^vl/));
+      }
+      const dados = temHeader ? linhas.slice(1) : linhas;
+      const out = [];
+      for (const linha of dados) {
+        const cols = linha.split(sep).map(c => c.trim().replace(/^"|"$/g,''));
+        if (cols.length < 2) continue;
+        const dataStr = cols[iData] || '';
+        const desc    = cols[iDesc] || 'Importado';
+        let valorStr  = cols[iValor] || '';
+        let ts = null;
+        const m1 = dataStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const m2 = dataStr.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+        if (m1)      ts = new Date(+m1[1], +m1[2]-1, +m1[3], 12).getTime();
+        else if (m2) ts = new Date(+m2[3], +m2[2]-1, +m2[1], 12).getTime();
+        if (!ts) continue;
+        // Valor BR (1.234,56) ou US (1,234.56)
+        let v = valorStr.replace(/[^\d.,\-]/g,'');
+        if (v.includes(',') && v.includes('.')) {
+          if (v.lastIndexOf(',') > v.lastIndexOf('.')) v = v.replace(/\./g,'').replace(',','.');
+          else v = v.replace(/,/g,'');
+        } else if (v.includes(',')) v = v.replace(',','.');
+        const vNum = parseFloat(v);
+        if (isNaN(vNum) || vNum === 0) continue;
+        out.push({
+          tipo: vNum >= 0 ? 'Receita' : 'Despesa',
+          valor: Math.abs(vNum),
+          texto: desc, timestamp: ts
+        });
+      }
+      return out;
+    }
+
+    function hashTransacao(t) {
+      const d = new Date(t.timestamp);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}_${t.valor.toFixed(2)}_${(t.texto||'').toLowerCase().slice(0,20)}`;
+    }
+
+    function detectarDuplicatas(novas) {
+      const existentes = new Set(cacheLancs.map(hashTransacao));
+      return novas.map(n => ({ ...n, dup: existentes.has(hashTransacao(n)), checked: !existentes.has(hashTransacao(n)) }));
+    }
+
+    function abrirImportar() {
+      document.getElementById('modal-importar').classList.remove('hidden');
+      document.getElementById('import-etapa-upload').classList.remove('hidden');
+      document.getElementById('import-etapa-preview').classList.add('hidden');
+      document.getElementById('input-arquivo-extrato').value = '';
+    }
+
+    function renderizarPreviewImport() {
+      const lista = document.getElementById('import-lista');
+      lista.innerHTML = '';
+      importTransacoes.forEach((t, i) => {
+        const dt = new Date(t.timestamp);
+        const dStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+        const corVal = t.tipo === 'Receita' ? 'text-green-600' : 'text-gray-800';
+        const sinal = t.tipo === 'Receita' ? '+' : '-';
+        const bgDup = t.dup ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-100';
+        lista.innerHTML += `
+          <li class="${bgDup} border p-3 rounded-xl flex items-center gap-3">
+            <input type="checkbox" data-idx="${i}" class="import-check w-5 h-5 text-blue-600 rounded" ${t.checked ? 'checked' : ''}>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-gray-800 truncate">${t.texto}</p>
+              <p class="text-[10px] text-gray-500 font-medium">${dStr} ${t.dup ? '• <span class="text-amber-700 font-bold">⚠ duplicado</span>' : ''}</p>
+            </div>
+            <p class="font-bold ${corVal} text-sm whitespace-nowrap">${sinal} R$ ${t.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+          </li>`;
+      });
+      document.querySelectorAll('.import-check').forEach(c => {
+        c.addEventListener('change', e => {
+          importTransacoes[+e.target.dataset.idx].checked = e.target.checked;
+          atualizarContadorImport();
+        });
+      });
+      // Popula selects
+      const selB = document.getElementById('import-banco-padrao'); selB.innerHTML = '';
+      (cacheConfig.bancos||[]).forEach(b => selB.innerHTML += `<option value="${b}">${b}</option>`);
+      (cacheConfig.cartoes||[]).forEach(c => selB.innerHTML += `<option value="${c.nome}">${c.nome} (cartão)</option>`);
+      const selC = document.getElementById('import-categoria-padrao'); selC.innerHTML = '';
+      selC.innerHTML = '<option value="📥 Importado">📥 Importado</option>';
+      (cacheConfig.categorias||[]).forEach(c => selC.innerHTML += `<option value="${c}">${c}</option>`);
+      atualizarContadorImport();
+    }
+
+    function atualizarContadorImport() {
+      const n = importTransacoes.filter(t => t.checked).length;
+      document.getElementById('import-contador').innerText = n;
+      document.getElementById('import-contador-btn').innerText = n;
+    }
 
     // ── HELPERS DE CATEGORIA ─────────────────────────────────────
     function getEmoji(cat) {
