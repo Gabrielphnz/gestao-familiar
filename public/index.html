@@ -198,6 +198,10 @@
         <div class="space-y-3">
           <input type="text" id="input-cartao-nome" placeholder="Nome (Ex: Nubank)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
           <input type="number" id="input-cartao-limite" step="0.01" placeholder="Limite Total (R$)" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500">
+          <div class="flex gap-3">
+            <input type="number" id="input-cartao-fechamento" min="1" max="28" placeholder="Dia fechamento (1-28)" class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
+            <input type="number" id="input-cartao-vencimento" min="1" max="28" placeholder="Dia vencimento (1-28)" class="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-xl font-medium focus:outline-blue-500 text-sm">
+          </div>
           <button id="btn-add-cartao" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">Cadastrar Cartão</button>
         </div>
       </div>
@@ -213,6 +217,16 @@
         <h2 class="text-3xl font-bold text-gray-800">Recorrentes 🔁</h2>
       </div>
       <p class="text-sm text-gray-500 mb-6">Lançamentos criados automaticamente todo mês (aluguel, salário, assinaturas).</p>
+
+      <!-- SUGESTÕES DE RECORRENTES -->
+      <div id="bloco-sugestoes-rec" class="hidden mb-6">
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4">
+          <h3 class="font-bold text-amber-800 mb-1 flex items-center gap-2">💡 Sugestões inteligentes</h3>
+          <p class="text-xs text-amber-700 mb-3">Detectamos gastos que se repetem. Adicione como recorrentes para previsibilidade.</p>
+          <div id="lista-sugestoes-rec" class="space-y-2"></div>
+        </div>
+      </div>
+
       <div id="lista-recorrentes" class="space-y-3"></div>
       <button id="btn-add-recorrente-trigger" class="fixed bottom-10 right-6 bg-gradient-to-tr from-blue-600 to-blue-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 hover:scale-105 transition-transform z-40">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -581,15 +595,18 @@
 
         <!-- Etapa 2: Preview -->
         <div id="import-etapa-preview" class="hidden">
-          <div class="flex gap-3 mb-4">
+          <div class="flex gap-3 mb-2">
             <div class="flex-1">
               <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Conta/Cartão</label>
               <select id="import-banco-padrao" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-blue-500"></select>
             </div>
             <div class="flex-1">
-              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoria</label>
+              <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Categoria padrão</label>
               <select id="import-categoria-padrao" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-blue-500"></select>
             </div>
+          </div>
+          <div id="import-aviso-cartao" class="hidden bg-purple-50 border border-purple-200 text-purple-800 p-2.5 rounded-lg text-xs mb-4">
+            💳 <b>Importação de cartão</b> — todas as transações serão lançadas como <b>Despesa</b> e vinculadas a este cartão.
           </div>
 
           <div class="flex items-center justify-between mb-3 px-1">
@@ -640,6 +657,7 @@
     let tendenciasCarregadas = false;
     let alertasMostrados = new Set();
     let dataFiltro = new Date();
+    let cacheRecorrentes = [];
     window.meuGrafico = null;
     window.grafTendencias = null;
 
@@ -803,9 +821,11 @@
     });
 
     document.getElementById('btn-confirmar-importar').addEventListener('click', async () => {
-      const banco   = document.getElementById('import-banco-padrao').value || 'Importado';
+      let bancoRaw  = document.getElementById('import-banco-padrao').value || 'Importado';
+      const ehCartao = bancoRaw.startsWith('card:');
+      const banco   = ehCartao ? bancoRaw.slice(5) : bancoRaw;
       const catPad  = document.getElementById('import-categoria-padrao').value;
-      const sel     = importTransacoes.filter(t => t.checked);
+      const sel     = importTransacoes.filter(t => t.checked).map(t => ehCartao ? { ...t, tipo: 'Despesa' } : t);
       if (!sel.length) { mostrarToast('Nada selecionado', 'Marque pelo menos 1 transação.', 'warning'); return; }
       const btn = document.getElementById('btn-confirmar-importar');
       btn.disabled = true; btn.innerText = `Importando 0/${sel.length}...`;
@@ -940,6 +960,113 @@
       } catch { alert('Erro ao ler imagem. Verifique se a foto está nítida.'); }
       finally { btn.innerText = 'Fotografar'; btn.disabled = false; e.target.value = ''; }
     });
+
+    // ── DETECTOR DE GASTOS RECORRENTES ───────────────────────────
+    function normalizarDesc(s) {
+      return (s || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/\(recorrente\)/g, '')
+        .replace(/\d+[\/-]\d+/g, '')   // remove datas
+        .replace(/\d+/g, '')           // remove números
+        .replace(/[^a-z\s]/g, '')      // remove pontuação
+        .replace(/\s+/g, ' ').trim()
+        .slice(0, 30);
+    }
+
+    async function analisarRecorrentesPotenciais(uid) {
+      const inicio = Date.now() - 90 * 86400000; // 90 dias
+      let snap;
+      try {
+        snap = await getDocs(query(collection(db, `usuarios/${uid}/lancamentos`), where('timestamp','>=', inicio)));
+      } catch(e) { return []; }
+
+      const grupos = {};
+      snap.forEach(d => {
+        const l = d.data();
+        if (l.tipo !== 'Despesa') return;
+        if (l.recorrenteId || l.fonte === 'recorrente') return;
+        if (l.categoria === '💳 Fatura Cartão') return;
+        const desc = normalizarDesc(l.texto);
+        if (desc.length < 4) return;
+        // Agrupa por descrição similar + valor arredondado (margem 10%)
+        const valorBucket = Math.round(l.valor / 5) * 5; // bucket de R$5
+        const key = `${desc}_${valorBucket}`;
+        if (!grupos[key]) grupos[key] = { textos: [], valores: [], ocorrencias: [], categoria: l.categoria, banco: l.banco };
+        grupos[key].textos.push(l.texto);
+        grupos[key].valores.push(l.valor);
+        const dt = new Date(l.timestamp);
+        grupos[key].ocorrencias.push({ ts: l.timestamp, mes: `${dt.getFullYear()}-${dt.getMonth()}`, dia: dt.getDate() });
+      });
+
+      const ignorados = new Set(cacheConfig.recorrentesIgnorados || []);
+      const candidatos = [];
+      for (const [key, g] of Object.entries(grupos)) {
+        if (ignorados.has(key)) continue;
+        const mesesUnicos = new Set(g.ocorrencias.map(o => o.mes));
+        if (mesesUnicos.size < 2) continue;
+
+        // Verifica se já existe recorrente com mesma descrição normalizada
+        const jaTem = (cacheRecorrentes || []).some(r => normalizarDesc(r.descricao) === normalizarDesc(g.textos[0]));
+        if (jaTem) continue;
+
+        const valorMedio = g.valores.reduce((a,b) => a+b, 0) / g.valores.length;
+        const diaMedio = Math.round(g.ocorrencias.reduce((a,o) => a+o.dia, 0) / g.ocorrencias.length);
+        candidatos.push({
+          key, descricao: g.textos[0], valor: parseFloat(valorMedio.toFixed(2)),
+          categoria: g.categoria, banco: g.banco,
+          dia: Math.min(28, diaMedio), ocorrencias: mesesUnicos.size
+        });
+      }
+      return candidatos.sort((a,b) => b.ocorrencias - a.ocorrencias).slice(0, 8);
+    }
+
+    function renderizarSugestoesRecorrentes(candidatos) {
+      const bloco = document.getElementById('bloco-sugestoes-rec');
+      const lista = document.getElementById('lista-sugestoes-rec');
+      if (!candidatos || !candidatos.length) { bloco.classList.add('hidden'); return; }
+      bloco.classList.remove('hidden');
+      lista.innerHTML = '';
+      candidatos.forEach(c => {
+        const emoji = getEmoji(c.categoria);
+        lista.innerHTML += `
+          <div class="bg-white rounded-xl p-3 flex items-center gap-3 border border-amber-100">
+            <div class="text-xl">${emoji}</div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-gray-800 truncate">${c.descricao}</p>
+              <p class="text-[10px] text-gray-500">R$ ${c.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})} • dia ~${c.dia} • ${c.ocorrencias}× nos últimos 3 meses</p>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick='aceitarSugestaoRec(${JSON.stringify(c).replace(/'/g,"&apos;")})' class="bg-green-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-green-700">+ Add</button>
+              <button onclick="ignorarSugestaoRec('${c.key}')" class="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1.5 rounded-lg hover:bg-gray-200">✕</button>
+            </div>
+          </div>`;
+      });
+    }
+
+    window.aceitarSugestaoRec = async (c) => {
+      // Pré-preenche o modal de novo recorrente
+      const selCat   = document.getElementById('input-rec-categoria');
+      const selBanco = document.getElementById('input-rec-banco');
+      selCat.innerHTML   = (cacheConfig.categorias||[]).map(x => `<option value="${x}">${x}</option>`).join('');
+      selBanco.innerHTML = (cacheConfig.bancos||[]).map(x => `<option value="${x}">${x}</option>`).join('');
+      (cacheConfig.cartoes||[]).forEach(x => selBanco.innerHTML += `<option value="${x.nome}">${x.nome} (cartão)</option>`);
+      document.getElementById('form-recorrente').reset();
+      document.getElementById('input-rec-id').value = '';
+      document.getElementById('input-rec-tipo').value = 'Despesa';
+      document.getElementById('input-rec-descricao').value = c.descricao;
+      document.getElementById('input-rec-valor').value = c.valor;
+      document.getElementById('input-rec-dia').value = c.dia;
+      if (c.categoria) document.getElementById('input-rec-categoria').value = c.categoria;
+      if (c.banco) document.getElementById('input-rec-banco').value = c.banco;
+      document.getElementById('titulo-modal-recorrente').innerText = 'Confirmar Recorrente';
+      document.getElementById('modal-recorrente').classList.remove('hidden');
+    };
+
+    window.ignorarSugestaoRec = async (key) => {
+      await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), {
+        recorrentesIgnorados: arrayUnion(key)
+      }, { merge: true });
+    };
 
     // ── IMPORTAÇÃO DE EXTRATO ────────────────────────────────────
     let importTransacoes = [];
@@ -1109,10 +1236,27 @@
       // Popula selects
       const selB = document.getElementById('import-banco-padrao'); selB.innerHTML = '';
       (cacheConfig.bancos||[]).forEach(b => selB.innerHTML += `<option value="${b}">${b}</option>`);
-      (cacheConfig.cartoes||[]).forEach(c => selB.innerHTML += `<option value="${c.nome}">${c.nome} (cartão)</option>`);
+      (cacheConfig.cartoes||[]).forEach(c => selB.innerHTML += `<option value="card:${c.nome}">${c.nome} (cartão)</option>`);
       const selC = document.getElementById('import-categoria-padrao'); selC.innerHTML = '';
       selC.innerHTML = '<option value="">📥 Usar sugerida (ou Importado)</option>';
       [...todasCats].forEach(c => selC.innerHTML += `<option value="${c}">${c}</option>`);
+      // Listener para detectar cartão e mostrar aviso
+      selB.onchange = () => {
+        const ehCartao = selB.value.startsWith('card:');
+        document.getElementById('import-aviso-cartao').classList.toggle('hidden', !ehCartao);
+        if (ehCartao) {
+          // Força todas como Despesa
+          importTransacoes.forEach(t => t.tipo = 'Despesa');
+          renderizarPreviewImport();
+        }
+      };
+      // Auto-detecta se é cartão pelo padrão (todos valores positivos = típico de Nubank/cartão)
+      const todosPositivos = importTransacoes.every(t => t.tipo === 'Receita');
+      if (todosPositivos && (cacheConfig.cartoes||[]).length > 0) {
+        // Se TODOS são "Receita" pelo parser, provavelmente é fatura de cartão (todos débitos)
+        selB.value = `card:${cacheConfig.cartoes[0].nome}`;
+        selB.onchange();
+      }
       atualizarContadorImport();
     }
 
@@ -1355,6 +1499,17 @@
       const novos = (cacheConfig.cartoes||[]).map(c => c.nome === nomeAntigo ? {nome: novoNome, limite: parseFloat(novoLimite)} : c);
       await updateDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), {cartoes: novos});
     };
+    window.editarCartaoCompleto = async (ct) => {
+      const novoNome = prompt('Nome:', ct.nome); if (!novoNome) return;
+      const novoLimite = prompt('Limite (R$):', ct.limite); if (!novoLimite || isNaN(novoLimite)) return;
+      const fech = prompt('Dia do fechamento (1-28):', ct.fechamento || '');
+      const venc = prompt('Dia do vencimento (1-28):', ct.vencimento || '');
+      const novo = { nome: novoNome, limite: parseFloat(novoLimite) };
+      const f = parseInt(fech); if (f >= 1 && f <= 28) novo.fechamento = f;
+      const v = parseInt(venc); if (v >= 1 && v <= 28) novo.vencimento = v;
+      const novos = (cacheConfig.cartoes||[]).map(c => c.nome === ct.nome ? novo : c);
+      await updateDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), { cartoes: novos });
+    };
     window.editarLancamento = (id, tipo, valor, categoria, banco, texto, timestamp) => {
       document.getElementById('input-id-edicao').value = id;
       document.getElementById('input-tipo').value = tipo;
@@ -1437,6 +1592,9 @@
           tendenciasCarregadas = true;
           carregarTendencias(usuarioAtual.uid);
         }
+        if (e.currentTarget.id === 'nav-recorrentes' && usuarioAtual) {
+          analisarRecorrentesPotenciais(usuarioAtual.uid).then(renderizarSugestoesRecorrentes);
+        }
       });
     });
 
@@ -1509,10 +1667,14 @@
     document.getElementById('btn-add-cartao').onclick = async () => {
       const n = document.getElementById('input-cartao-nome').value.trim();
       const l = parseFloat(document.getElementById('input-cartao-limite').value);
+      const fe = parseInt(document.getElementById('input-cartao-fechamento').value) || null;
+      const ve = parseInt(document.getElementById('input-cartao-vencimento').value) || null;
       if (n && !isNaN(l)) {
-        await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), {cartoes: arrayUnion({nome:n, limite:l})}, {merge:true});
-        document.getElementById('input-cartao-nome').value = '';
-        document.getElementById('input-cartao-limite').value = '';
+        const obj = { nome: n, limite: l };
+        if (fe && fe >= 1 && fe <= 28) obj.fechamento = fe;
+        if (ve && ve >= 1 && ve <= 28) obj.vencimento = ve;
+        await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), { cartoes: arrayUnion(obj) }, { merge: true });
+        ['input-cartao-nome','input-cartao-limite','input-cartao-fechamento','input-cartao-vencimento'].forEach(id => document.getElementById(id).value = '');
       }
     };
 
@@ -1633,7 +1795,7 @@
         const dataLanc = new Date(hoje.getFullYear(), hoje.getMonth(), diaReal, 12, 0, 0);
         if (dataLanc <= hoje) {
           const docId = `rec_${d.id}_${hoje.getFullYear()}_${hoje.getMonth()}`;
-          lotes.push(setDoc(doc(db, `usuarios/${uid}/lancamentos`, docId), { tipo:r.tipo, valor:r.valor, categoria:r.categoria, banco:r.banco, texto:`${r.descricao} (Recorrente)`, timestamp:dataLanc.getTime(), recorrenteId:d.id }));
+          lotes.push(setDoc(doc(db, `usuarios/${uid}/lancamentos`, docId), { tipo:r.tipo, valor:r.valor, categoria:r.categoria, banco:r.banco, texto:`${r.descricao} (Recorrente)`, timestamp:dataLanc.getTime(), recorrenteId:d.id, fonte:'recorrente' }));
         }
       });
       if (lotes.length) await Promise.all(lotes);
@@ -1765,8 +1927,11 @@
         });
       });
 
-      inscricaoRecorrentes = onSnapshot(collection(db, `usuarios/${uid}/recorrentes`), snap => {
+      inscricaoRecorrentes = onSnapshot(collection(db, `usuarios/${uid}/recorrentes`), async snap => {
         const lista = document.getElementById('lista-recorrentes'); lista.innerHTML = '';
+        cacheRecorrentes = []; snap.forEach(d => cacheRecorrentes.push({ id: d.id, ...d.data() }));
+        // Re-roda detector de sugestões com a lista atualizada
+        analisarRecorrentesPotenciais(uid).then(renderizarSugestoesRecorrentes);
         if (snap.empty) {
           lista.innerHTML = `<div class="text-center text-gray-400 py-12"><p class="text-5xl mb-3">🔁</p><p class="font-medium text-gray-600">Nenhum recorrente cadastrado</p><p class="text-sm mt-1">Adicione aluguel, salário, assinaturas…</p></div>`;
           return;
@@ -1846,22 +2011,100 @@
       const listaCartoes = document.getElementById('lista-cartoes');
       if (listaCartoes && cacheConfig.cartoes) {
         listaCartoes.innerHTML = '';
+        const hoje = new Date();
         cacheConfig.cartoes.forEach(ct => {
-          let gasto = 0;
+          // Fatura aberta = transações desde último fechamento
+          // Próxima fatura = transações após o dia de fechamento deste mês
+          const fechamento = ct.fechamento || null;
+          const vencimento = ct.vencimento || null;
+
+          let faturaAberta = 0, proximaFatura = 0, gastoTotal = 0;
+          let dataUltimoFech = null, dataProxFech = null, dataProxVenc = null;
+          if (fechamento) {
+            const diaHoje = hoje.getDate();
+            const m = hoje.getMonth(), y = hoje.getFullYear();
+            if (diaHoje > fechamento) {
+              dataUltimoFech = new Date(y, m, fechamento, 23, 59, 59);
+              dataProxFech   = new Date(y, m+1, fechamento, 23, 59, 59);
+            } else {
+              dataUltimoFech = new Date(y, m-1, fechamento, 23, 59, 59);
+              dataProxFech   = new Date(y, m, fechamento, 23, 59, 59);
+            }
+            if (vencimento) {
+              const baseMes = dataProxFech.getMonth();
+              const baseAno = dataProxFech.getFullYear();
+              dataProxVenc = new Date(baseAno, baseMes, vencimento);
+              if (dataProxVenc < dataProxFech) dataProxVenc = new Date(baseAno, baseMes+1, vencimento);
+            }
+          }
+
           cacheLancs.forEach(l => {
-            if (l.banco === ct.nome) gasto += l.tipo==='Despesa' ? l.valor : -l.valor;
-            if (l.categoria==='💳 Fatura Cartão' && l.cartaoVinculado===ct.nome) gasto -= l.valor;
+            if (l.banco !== ct.nome) {
+              if (l.categoria === '💳 Fatura Cartão' && l.cartaoVinculado === ct.nome) gastoTotal -= l.valor;
+              return;
+            }
+            const v = l.tipo === 'Despesa' ? l.valor : -l.valor;
+            gastoTotal += v;
+            if (fechamento) {
+              const ts = l.timestamp;
+              if (dataUltimoFech && ts > dataUltimoFech.getTime() && ts <= dataProxFech.getTime()) {
+                faturaAberta += v;
+              } else if (dataProxFech && ts > dataProxFech.getTime()) {
+                proximaFatura += v;
+              }
+            }
           });
-          if (gasto < 0) gasto = 0;
-          const pct = ct.limite > 0 ? Math.min(100,(gasto/ct.limite)*100) : 0;
+          if (gastoTotal < 0) gastoTotal = 0;
+          if (faturaAberta < 0) faturaAberta = 0;
+          if (proximaFatura < 0) proximaFatura = 0;
+
+          const pct = ct.limite > 0 ? Math.min(100, (gastoTotal/ct.limite)*100) : 0;
           const corBarra = pct > 85 ? 'bg-red-500' : pct > 60 ? 'bg-amber-500' : 'bg-blue-500';
+          const corGrad = pct > 85 ? 'from-red-500 to-rose-500' : pct > 60 ? 'from-amber-500 to-orange-500' : 'from-blue-600 to-indigo-600';
+
+          const dataVencStr = dataProxVenc ? `${String(dataProxVenc.getDate()).padStart(2,'0')}/${String(dataProxVenc.getMonth()+1).padStart(2,'0')}` : null;
+          const diasAteVenc = dataProxVenc ? Math.ceil((dataProxVenc - hoje) / 86400000) : null;
+          const corVenc = diasAteVenc !== null ? (diasAteVenc <= 3 ? 'text-red-600' : diasAteVenc <= 7 ? 'text-amber-600' : 'text-gray-500') : '';
+
           listaCartoes.innerHTML += `
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-              <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-gray-800 text-lg">${ct.nome}</h3><div class="flex gap-2"><button onclick="editarCartao('${ct.nome}',${ct.limite})" class="text-gray-400 hover:text-blue-500 text-sm">✏️</button><button onclick="removerCartao('${ct.nome}')" class="text-gray-400 hover:text-red-500 text-sm">🗑️</button></div></div>
-              <div class="flex justify-between text-xs text-gray-500 mb-1"><span>Limite: R$ ${ct.limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span><span class="font-bold text-blue-600">Gasto: R$ ${gasto.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
-              <div class="flex justify-between text-xs text-gray-400 mb-3"><span>Disponível: R$ ${(ct.limite-gasto).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span><span>${pct.toFixed(0)}% utilizado</span></div>
-              <div class="w-full bg-gray-100 rounded-full h-3 mb-3"><div class="${corBarra} h-3 rounded-full transition-all duration-500" style="width:${pct}%"></div></div>
-              <button onclick="abrirModalFatura('${ct.nome}',${gasto})" class="w-full bg-blue-50 text-blue-600 font-bold py-2 rounded-lg hover:bg-blue-100 transition text-sm">Pagar Fatura</button>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div class="bg-gradient-to-br ${corGrad} text-white p-5">
+                <div class="flex justify-between items-start mb-3">
+                  <div>
+                    <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Cartão</p>
+                    <h3 class="font-bold text-xl">${ct.nome}</h3>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick='editarCartaoCompleto(${JSON.stringify(ct).replace(/'/g,"&apos;")})' class="text-white/70 hover:text-white text-sm bg-white/10 w-7 h-7 rounded-lg flex items-center justify-center">✏️</button>
+                    <button onclick="removerCartao('${ct.nome}')" class="text-white/70 hover:text-white text-sm bg-white/10 w-7 h-7 rounded-lg flex items-center justify-center">🗑️</button>
+                  </div>
+                </div>
+                <p class="text-[10px] uppercase tracking-widest opacity-80 font-bold">Fatura Aberta</p>
+                <p class="text-3xl font-bold mt-1">R$ ${(fechamento ? faturaAberta : gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+                ${dataVencStr ? `<p class="text-xs mt-2 opacity-90">Vence em <b>${dataVencStr}</b> ${diasAteVenc !== null && diasAteVenc >= 0 ? `(${diasAteVenc}d)` : ''}</p>` : ''}
+              </div>
+              <div class="p-5">
+                ${fechamento ? `
+                  <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-gray-50 p-3 rounded-xl">
+                      <p class="text-[10px] font-bold text-gray-500 uppercase">Próxima Fatura</p>
+                      <p class="text-base font-bold text-gray-800">R$ ${proximaFatura.toLocaleString('pt-BR',{minimumFractionDigits:2})}</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl">
+                      <p class="text-[10px] font-bold text-gray-500 uppercase">Fechamento</p>
+                      <p class="text-base font-bold text-gray-800">dia ${fechamento}</p>
+                    </div>
+                  </div>` : '<p class="text-[11px] text-amber-700 bg-amber-50 px-3 py-2 rounded-lg mb-3">⚠️ Configure fechamento e vencimento (editar ✏️) para separar fatura atual e próxima.</p>'}
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>Limite: R$ ${ct.limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+                  <span class="font-bold ${corVenc || 'text-blue-600'}">${pct.toFixed(0)}%</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                  <div class="${corBarra} h-2.5 rounded-full transition-all duration-500" style="width:${pct}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mb-3">Disponível: <b class="text-gray-800">R$ ${(ct.limite-gastoTotal).toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></p>
+                <button onclick="abrirModalFatura('${ct.nome}',${fechamento ? faturaAberta : gastoTotal})" class="w-full bg-blue-50 text-blue-600 font-bold py-2.5 rounded-lg hover:bg-blue-100 transition text-sm">💳 Pagar Fatura</button>
+              </div>
             </div>`;
         });
       }
