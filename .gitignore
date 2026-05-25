@@ -1,1 +1,7 @@
 .claude/
+functions/node_modules/
+functions/package-lock.json
+.firebase/
+.agents/
+skills-lock.json
+*.local
