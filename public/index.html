@@ -43,6 +43,11 @@
           <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Senha</label>
           <input type="password" id="login-senha" required class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-blue-500">
         </div>
+        <label class="flex items-center gap-2 px-1 cursor-pointer">
+          <input type="checkbox" id="login-lembrar" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+          <span class="text-xs font-semibold text-gray-600">Lembrar-me por 30 dias</span>
+        </label>
+        <p class="text-[10px] text-gray-400 px-1">Sem lembrar, a sessão expira em 24 horas.</p>
         <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 mt-2">Entrar</button>
         <button type="button" id="btn-criar-conta" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-xl hover:bg-gray-200">Criar Nova Conta</button>
       </form>
@@ -470,6 +475,68 @@
     window.meuGrafico = null;
     window.grafTendencias = null;
 
+    // ── SESSÃO / TTL ──────────────────────────────────────────────
+    const SESSION_KEY = 'gestao_session';
+    const TAB_KEY     = 'gestao_tab_id';
+
+    function gerarTabId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function obterTabId() {
+      let id = sessionStorage.getItem(TAB_KEY);
+      if (!id) { id = gerarTabId(); sessionStorage.setItem(TAB_KEY, id); }
+      return id;
+    }
+
+    function salvarSessaoLocal(user, rememberMe) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        uid: user.uid, email: user.email,
+        rememberMe: !!rememberMe,
+        loginAt: Date.now()
+      }));
+    }
+
+    function sessaoValida() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        const ttl = s.rememberMe ? 30 * 86400000 : 86400000; // 30d ou 1d
+        return (Date.now() - s.loginAt) < ttl;
+      } catch { return false; }
+    }
+
+    function limparSessaoLocal() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+
+    async function registrarSessaoFirestore(uid) {
+      const tabId = obterTabId();
+      try {
+        await setDoc(doc(db, `usuarios/${uid}/sessoes`, tabId), {
+          loginAt:   Date.now(),
+          userAgent: navigator.userAgent,
+          platform:  navigator.platform || navigator.userAgentData?.platform || '?',
+          language:  navigator.language,
+          screenW:   screen.width,
+          screenH:   screen.height,
+          tabId,
+          active: true
+        });
+      } catch(e) { console.warn('Sessão Firestore não salva:', e); }
+    }
+
+    async function encerrarSessaoFirestore(uid) {
+      const tabId = obterTabId();
+      if (!uid || !tabId) return;
+      try {
+        await updateDoc(doc(db, `usuarios/${uid}/sessoes`, tabId), {
+          active: false, logoutAt: Date.now()
+        });
+      } catch {}
+    }
+
     // ── PWA INSTALL ──────────────────────────────────────────────
     let deferredPrompt = null;
     window.addEventListener('beforeinstallprompt', e => {
@@ -523,6 +590,47 @@
       finally { btn.innerText = 'Fotografar'; btn.disabled = false; e.target.value = ''; }
     });
 
+    // ── HELPERS DE CATEGORIA ─────────────────────────────────────
+    function getEmoji(cat) {
+      if (!cat) return '📌';
+      const chars = [...cat];
+      const first = chars[0];
+      const code = first.codePointAt(0);
+      // Detecta emoji (codepoint acima de 127 ou variações de emoji)
+      if (code > 127 || (code >= 0x2600 && code <= 0x27BF)) return first;
+      // Mapa de palavras-chave → emoji
+      const lower = cat.toLowerCase();
+      const mapa = [
+        ['aliment','🍔'],['merca','🛒'],['restaur','🍽️'],['lanch','🍟'],
+        ['transpo','🚗'],['uber','🚕'],['combusti','⛽'],
+        ['saude','💊'],['farm','💊'],['medic','🏥'],
+        ['lazer','🎮'],['entret','🎬'],['stream','📺'],['netflix','📺'],
+        ['educa','📚'],['curso','🎓'],
+        ['casa','🏠'],['aluguel','🏠'],['luz','💡'],['água','💧'],['internet','📡'],
+        ['roupa','👕'],['calçad','👟'],
+        ['viage','✈️'],['hotel','🏨'],
+        ['salar','💰'],['receita','💰'],['bonus','💰'],
+        ['fatura','💳'],['cartão','💳'],['meta','🎯'],
+        ['pet','🐾'],['animal','🐾'],
+        ['presente','🎁'],['gift','🎁'],
+      ];
+      for (const [k, e] of mapa) if (lower.includes(k)) return e;
+      return cat.charAt(0).toUpperCase();
+    }
+
+    function getCatColor(cat) {
+      // Cor determinística baseada no nome da categoria
+      const paleta = [
+        ['bg-blue-100','text-blue-700'],['bg-emerald-100','text-emerald-700'],
+        ['bg-amber-100','text-amber-700'],['bg-purple-100','text-purple-700'],
+        ['bg-rose-100','text-rose-700'],['bg-cyan-100','text-cyan-700'],
+        ['bg-orange-100','text-orange-700'],['bg-indigo-100','text-indigo-700'],
+      ];
+      let hash = 0;
+      for (let i = 0; i < (cat||'').length; i++) hash = (hash * 31 + (cat||'').charCodeAt(i)) & 0xFFFF;
+      return paleta[hash % paleta.length];
+    }
+
     // ── TEMPO ─────────────────────────────────────────────────────
     const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
     function atualizarLabelsTempo() {
@@ -551,18 +659,38 @@
         lista.innerHTML = `<div class="text-center py-12 text-gray-400"><p class="text-4xl mb-3">${termoBusca ? '🔍' : '📋'}</p><p class="font-medium">${termoBusca ? 'Nenhum resultado' : 'Sem lançamentos este mês'}</p><p class="text-sm mt-1">${termoBusca ? 'Tente outro termo' : 'Toque em + para adicionar'}</p></div>`;
         return;
       }
+      // Agrupa por data
+      const grupos = {};
       items.forEach(item => {
-        const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-        const emoji = (item.categoria||'').split(' ')[0] || (item.tipo === 'Receita' ? '💰' : '💸');
         const d = new Date(item.timestamp);
-        const dataStr = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(item);
+      });
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const ontem = new Date(hoje); ontem.setDate(ontem.getDate()-1);
+
+      Object.keys(grupos).sort((a,b) => b.localeCompare(a)).forEach(key => {
+        const [y,m,d] = key.split('-').map(Number);
+        const dt = new Date(y,m-1,d); dt.setHours(0,0,0,0);
+        let label = `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+        if (dt.getTime() === hoje.getTime()) label = 'Hoje';
+        else if (dt.getTime() === ontem.getTime()) label = 'Ontem';
+        lista.innerHTML += `<li class="px-1 pt-3 pb-1"><span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${label}</span></li>`;
+
+        grupos[key].forEach(item => {
+        const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        const emoji = getEmoji(item.categoria);
+        const [bg, fg] = getCatColor(item.categoria);
+        const dataStr = `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
         lista.innerHTML += `
-          <li class="bg-white p-3 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center hover:bg-gray-50 transition">
+          <li class="bg-white p-3 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center hover:bg-gray-50 transition active:scale-[0.99]">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-full flex items-center justify-center text-xl border border-gray-100">${emoji}</div>
+              <div class="w-11 h-11 flex-shrink-0 ${bg} rounded-2xl flex items-center justify-center text-xl overflow-hidden" style="min-width:44px">${emoji}</div>
               <div class="min-w-0">
                 <p class="font-bold text-sm text-gray-800 leading-tight truncate">${item.texto}</p>
-                <p class="text-[10px] text-gray-400 uppercase font-medium tracking-wide mt-0.5">${item.banco} • ${dataStr}</p>
+                <p class="text-[10px] ${fg} font-semibold truncate mt-0.5">${item.categoria || '—'}</p>
+                <p class="text-[10px] text-gray-400 font-medium mt-0.5">${item.banco}</p>
               </div>
             </div>
             <div class="flex items-center gap-3 flex-shrink-0 ml-2">
@@ -575,7 +703,8 @@
               </div>
             </div>
           </li>`;
-      });
+        }); // fim grupos[key].forEach
+      }); // fim Object.keys
     }
 
     // ── CSV ───────────────────────────────────────────────────────
@@ -626,13 +755,21 @@
     }
 
     // ── AUTH ──────────────────────────────────────────────────────
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
+        // Verifica se sessão local ainda é válida
+        if (!sessaoValida()) {
+          limparSessaoLocal();
+          await signOut(auth);
+          mostrarToast('Sessão expirada', 'Faça login novamente para continuar.', 'info');
+          return;
+        }
         usuarioAtual = user; tendenciasCarregadas = false; alertasMostrados = new Set();
         document.getElementById('input-uid-usuario').value = user.uid;
         document.getElementById('tela-login').classList.add('hidden');
         document.getElementById('app-principal').classList.remove('hidden');
         document.getElementById('app-principal').classList.add('flex');
+        await registrarSessaoFirestore(user.uid);
         iniciarCofreDoUsuario(user.uid);
       } else {
         usuarioAtual = null;
@@ -753,12 +890,26 @@
     // ── FORMULÁRIOS ───────────────────────────────────────────────
     document.getElementById('form-login').onsubmit = async e => {
       e.preventDefault();
-      try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value); }
-      catch { alert('E-mail ou senha incorretos.'); }
+      const email = document.getElementById('login-email').value;
+      const senha = document.getElementById('login-senha').value;
+      const lembrar = document.getElementById('login-lembrar').checked;
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.innerText = 'Entrando...'; btn.disabled = true;
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, senha);
+        salvarSessaoLocal(cred.user, lembrar);
+      } catch {
+        mostrarToast('Falha no login', 'E-mail ou senha incorretos.', 'error');
+      } finally { btn.innerText = 'Entrar'; btn.disabled = false; }
     };
     document.getElementById('btn-criar-conta').onclick = async () => {
-      try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-senha').value); }
-      catch(e) { alert('Erro ao criar conta: ' + e.message); }
+      const email = document.getElementById('login-email').value;
+      const senha = document.getElementById('login-senha').value;
+      const lembrar = document.getElementById('login-lembrar').checked;
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, senha);
+        salvarSessaoLocal(cred.user, lembrar);
+      } catch(e) { mostrarToast('Erro ao criar conta', e.message, 'error'); }
     };
 
     function hojeStr() {
@@ -784,7 +935,13 @@
     document.getElementById('btn-cancelar-saldo-meta').onclick = () => document.getElementById('modal-saldo-meta').classList.add('hidden');
     document.getElementById('btn-cancelar-fatura').onclick = () => document.getElementById('modal-fatura').classList.add('hidden');
     document.getElementById('btn-cancelar-recorrente').onclick = () => document.getElementById('modal-recorrente').classList.add('hidden');
-    document.getElementById('btn-sair').onclick = () => { toggleMenu(false); signOut(auth); };
+    document.getElementById('btn-sair').onclick = async () => {
+      toggleMenu(false);
+      const uid = usuarioAtual?.uid;
+      limparSessaoLocal();
+      if (uid) await encerrarSessaoFirestore(uid);
+      await signOut(auth);
+    };
 
     document.getElementById('btn-add-banco').onclick = async () => {
       const v = document.getElementById('input-novo-banco').value.trim();
