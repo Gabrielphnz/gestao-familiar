@@ -1,0 +1,76 @@
+{
+  "_comment": "Configuração do Atalho iOS — importe pelo app Atalhos (Shortcuts)",
+  "_instrucoes": [
+    "1. Abra o app 'Atalhos' no iPhone",
+    "2. Toque em '+' para criar novo atalho",
+    "3. Adicione as ações abaixo na ordem indicada",
+    "4. Renomeie para 'Adicionar Gasto'",
+    "5. Adicione à tela inicial para acesso rápido"
+  ],
+  "nome": "Adicionar Gasto — Gestão Familiar",
+  "acoes": [
+    {
+      "passo": 1,
+      "acao": "Pedir entrada",
+      "config": {
+        "pergunta": "Tipo?",
+        "tipo_entrada": "Lista",
+        "opcoes": ["Despesa", "Receita"],
+        "variavel": "tipo"
+      }
+    },
+    {
+      "passo": 2,
+      "acao": "Pedir entrada",
+      "config": {
+        "pergunta": "Valor (ex: 25.90)?",
+        "tipo_entrada": "Número",
+        "variavel": "valor"
+      }
+    },
+    {
+      "passo": 3,
+      "acao": "Pedir entrada",
+      "config": {
+        "pergunta": "Descrição?",
+        "tipo_entrada": "Texto",
+        "variavel": "descricao"
+      }
+    },
+    {
+      "passo": 4,
+      "acao": "Pedir entrada",
+      "config": {
+        "pergunta": "Categoria?",
+        "tipo_entrada": "Lista",
+        "opcoes": ["🍔 Alimentação", "🚗 Transporte", "🏠 Moradia", "💊 Saúde", "🎮 Lazer", "📚 Educação", "💸 Outros"],
+        "variavel": "categoria"
+      }
+    },
+    {
+      "passo": 5,
+      "acao": "Obter conteúdo de URL",
+      "config": {
+        "url": "https://us-central1-device-streaming-8cc2d083.cloudfunctions.net/webhook",
+        "metodo": "POST",
+        "cabecalhos": { "Content-Type": "application/json" },
+        "corpo_json": {
+          "uid":      "COLE_SEU_UID_AQUI",
+          "token":    "COLE_SEU_TOKEN_AQUI",
+          "tipo":     "${tipo}",
+          "valor":    "${valor}",
+          "descricao": "${descricao}",
+          "categoria": "${categoria}",
+          "fonte":    "ios-shortcuts"
+        }
+      }
+    },
+    {
+      "passo": 6,
+      "acao": "Mostrar resultado",
+      "config": {
+        "mensagem": "✅ Lançamento registrado!\n${tipo} de R$${valor}\n${descricao}"
+      }
+    }
+  ]
+}

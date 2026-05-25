@@ -222,40 +222,65 @@
         <h2 class="text-3xl font-bold text-gray-800">Ajustes ⚙️</h2>
       </div>
 
+      <!-- UID -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
-        <h3 class="font-bold text-gray-700 mb-2 flex items-center gap-2">Integração do Robô <span class="text-xl">🤖</span></h3>
-        <p class="text-xs text-gray-500 mb-3">Copie o seu ID único para configurar o aplicativo leitor de Pix no seu celular.</p>
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Seu ID Único <span class="text-lg">🪪</span></h3>
+        <p class="text-xs text-gray-500 mb-3">Usado para conectar os apps companheiros à sua conta.</p>
         <div class="flex gap-2">
-          <input type="text" id="input-uid-usuario" readonly placeholder="Carregando ID..." class="flex-1 p-3 bg-gray-100 border border-gray-200 rounded-xl font-mono text-xs text-gray-600 focus:outline-none">
-          <button id="btn-copiar-uid" class="bg-gray-800 text-white font-bold px-4 rounded-xl hover:bg-gray-900 transition">Copiar</button>
+          <input type="text" id="input-uid-usuario" readonly placeholder="Carregando..." class="flex-1 p-3 bg-gray-100 border border-gray-200 rounded-xl font-mono text-xs text-gray-600 focus:outline-none">
+          <button id="btn-copiar-uid" class="bg-gray-800 text-white font-bold px-4 rounded-xl hover:bg-gray-900 transition text-sm">Copiar</button>
         </div>
       </div>
 
+      <!-- TOKEN -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
-        <h3 class="font-bold text-gray-700 mb-2 flex items-center gap-2">Monitor Android <span>🤖</span></h3>
-        <p class="text-xs text-gray-500 mb-3">App companion que lê notificações bancárias e lança automaticamente.</p>
-        <div class="bg-gray-50 p-3 rounded-xl text-xs text-gray-600 space-y-1.5 mb-3">
-          <p><b>1.</b> Instale o app companion no Android</p>
-          <p><b>2.</b> Cole o seu <b>ID Único</b> (acima) no app</p>
-          <p><b>3.</b> Conceda acesso às notificações</p>
-          <p><b>4.</b> Lançamentos aparecem aqui em tempo real</p>
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Token de Integração <span class="text-lg">🔑</span></h3>
+        <p class="text-xs text-gray-500 mb-3">Token secreto usado pelos apps companheiros para enviar lançamentos.</p>
+        <div class="flex gap-2 mb-3">
+          <input type="text" id="input-token-webhook" readonly placeholder="Nenhum token gerado..." class="flex-1 p-3 bg-gray-100 border border-gray-200 rounded-xl font-mono text-xs text-gray-600 focus:outline-none">
+          <button id="btn-copiar-token" class="bg-gray-800 text-white font-bold px-4 rounded-xl hover:bg-gray-900 transition text-sm">Copiar</button>
         </div>
-        <p class="text-[11px] text-gray-400 mb-2">Estrutura esperada pelo Firestore (para devs):</p>
-        <button id="btn-copiar-estrutura" class="w-full bg-gray-100 text-gray-700 font-bold text-xs py-2 rounded-xl hover:bg-gray-200 transition">Copiar estrutura JSON</button>
+        <button id="btn-gerar-token" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm">⚡ Gerar Novo Token</button>
+        <p class="text-[10px] text-gray-400 mt-2 text-center">⚠️ Gerar novo token invalida o anterior imediatamente.</p>
       </div>
 
+      <!-- ANDROID -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
-        <h3 class="font-bold text-gray-700 mb-2 flex items-center gap-2">Atalho iPhone <span>🍎</span></h3>
-        <p class="text-xs text-gray-500 mb-3">Use o app <b>Atalhos</b> para registrar despesas com a Siri.</p>
-        <div class="bg-gray-50 p-3 rounded-xl text-xs text-gray-600 space-y-1.5 mb-3">
-          <p><b>1.</b> Adicione este app à tela inicial (iOS 16.4+)</p>
-          <p><b>2.</b> Abra <b>Atalhos</b> → Novo Atalho</p>
-          <p><b>3.</b> Adicione "Pedir entrada" (valor e descrição)</p>
-          <p><b>4.</b> Ação "Obter conteúdo URL" → POST para Firebase</p>
-          <p><b>5.</b> Diga "Ei Siri, adicionar despesa"</p>
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Monitor Android <span class="text-lg">🤖</span></h3>
+        <p class="text-xs text-gray-500 mb-3">Lê notificações bancárias (Nubank, Itaú, Bradesco…) e lança automaticamente. <b>Grátis, sem root.</b></p>
+        <div class="bg-slate-900 p-3 rounded-xl text-xs text-green-400 font-mono mb-3 space-y-1">
+          <p class="text-gray-500"># Cole no Termux (Android)</p>
+          <p id="cmd-termux">pkg install -y python termux-api && pip install requests</p>
         </div>
+        <div class="bg-gray-50 p-3 rounded-xl text-xs text-gray-600 space-y-1.5 mb-3">
+          <p><b>1.</b> Instale <b>Termux</b> + <b>Termux:API</b> no F-Droid ou Play Store</p>
+          <p><b>2.</b> Cole o comando acima no Termux e execute</p>
+          <p><b>3.</b> Baixe o monitor: <span class="font-mono bg-gray-200 px-1 rounded">monitor.py</span> (disponível no GitHub)</p>
+          <p><b>4.</b> Edite e cole seu <b>UID</b> e <b>Token</b> no topo do arquivo</p>
+          <p><b>5.</b> Execute: <span class="font-mono bg-gray-200 px-1 rounded">python monitor.py</span></p>
+          <p><b>6.</b> Conceda permissão de notificações quando solicitado</p>
+        </div>
+        <button id="btn-copiar-cmd-android" class="w-full bg-gray-100 text-gray-700 font-bold text-xs py-2 rounded-xl hover:bg-gray-200 transition">📋 Copiar comando de instalação</button>
+      </div>
+
+      <!-- IOS -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+        <h3 class="font-bold text-gray-700 mb-1 flex items-center gap-2">Atalho iPhone <span class="text-lg">🍎</span></h3>
+        <p class="text-xs text-gray-500 mb-3">Registre despesas com a Siri ou um toque na tela inicial. iOS 16.4+.</p>
+        <div class="bg-gray-50 p-3 rounded-xl text-xs text-gray-600 space-y-1.5 mb-3">
+          <p><b>1.</b> Abra o app <b>Atalhos</b> → toque em <b>+</b></p>
+          <p><b>2.</b> Adicione: <b>Pedir entrada</b> → Tipo (Despesa/Receita)</p>
+          <p><b>3.</b> Adicione: <b>Pedir entrada</b> → Valor (número)</p>
+          <p><b>4.</b> Adicione: <b>Pedir entrada</b> → Descrição (texto)</p>
+          <p><b>5.</b> Adicione: <b>Obter conteúdo URL</b> → POST para:</p>
+          <p class="font-mono bg-gray-200 px-2 py-1 rounded break-all text-[10px]">https://us-central1-device-streaming-8cc2d083.cloudfunctions.net/webhook</p>
+          <p><b>6.</b> No corpo JSON cole seu UID e Token (botão abaixo)</p>
+          <p><b>7.</b> Nomeie como "Adicionar Gasto" e adicione à tela inicial</p>
+          <p><b>8.</b> Diga: <i>"Ei Siri, Adicionar Gasto"</i></p>
+        </div>
+        <button id="btn-copiar-json-ios" class="w-full bg-gray-100 text-gray-700 font-bold text-xs py-2 rounded-xl hover:bg-gray-200 transition mb-2">📋 Copiar JSON do Atalho (com seu UID e Token)</button>
         <div class="bg-blue-50 p-3 rounded-xl text-xs text-blue-700">
-          <b>Dica:</b> Instalar como PWA na tela inicial já resolve 90% dos casos — o app abre instantâneo, sem barra do browser.
+          <b>Dica rápida:</b> Instalar como PWA na tela inicial já resolve 90% dos casos — abre instantâneo, sem barra do browser.
         </div>
       </div>
 
@@ -555,17 +580,50 @@
     window.addEventListener('appinstalled', () =>
       document.getElementById('banner-instalar').classList.add('hidden'));
 
-    // ── UID / ESTRUTURA JSON ──────────────────────────────────────
+    // ── UID / TOKEN / COMPANION ───────────────────────────────────
+    function copiarTexto(texto, btn, label) {
+      navigator.clipboard.writeText(texto).catch(() => { try { const ta = document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch {} });
+      btn.innerText = '✓ Copiado!'; setTimeout(() => btn.innerText = label, 2200);
+    }
+
     document.getElementById('btn-copiar-uid').addEventListener('click', () => {
-      const el = document.getElementById('input-uid-usuario'); el.select(); document.execCommand('copy');
-      const btn = document.getElementById('btn-copiar-uid');
-      btn.innerText = 'Copiado!'; setTimeout(() => btn.innerText = 'Copiar', 2000);
+      copiarTexto(document.getElementById('input-uid-usuario').value, document.getElementById('btn-copiar-uid'), 'Copiar');
     });
-    document.getElementById('btn-copiar-estrutura').addEventListener('click', () => {
-      const estrutura = JSON.stringify({ tipo: "Despesa", valor: 0.00, categoria: "🍔 Alimentação", banco: "Dinheiro Físico", texto: "Descrição", timestamp: Date.now() }, null, 2);
-      navigator.clipboard.writeText(estrutura).catch(() => {});
-      const btn = document.getElementById('btn-copiar-estrutura');
-      btn.innerText = '✓ Copiado!'; setTimeout(() => btn.innerText = 'Copiar estrutura JSON', 2000);
+
+    document.getElementById('btn-copiar-token').addEventListener('click', () => {
+      const t = document.getElementById('input-token-webhook').value;
+      if (!t) { mostrarToast('Sem token', 'Gere um token primeiro.', 'warning'); return; }
+      copiarTexto(t, document.getElementById('btn-copiar-token'), 'Copiar');
+    });
+
+    document.getElementById('btn-gerar-token').addEventListener('click', async () => {
+      if (!usuarioAtual) return;
+      const btn = document.getElementById('btn-gerar-token');
+      btn.innerText = 'Gerando...'; btn.disabled = true;
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2,'0')).join('');
+      await setDoc(doc(db, `usuarios/${usuarioAtual.uid}/configuracoes/geral`), { webhookToken: token }, { merge: true });
+      document.getElementById('input-token-webhook').value = token;
+      mostrarToast('Token gerado!', 'Copie e cole no app companheiro.', 'success');
+      btn.innerText = '⚡ Gerar Novo Token'; btn.disabled = false;
+    });
+
+    document.getElementById('btn-copiar-cmd-android').addEventListener('click', () => {
+      copiarTexto('pkg install -y python termux-api && pip install requests', document.getElementById('btn-copiar-cmd-android'), '📋 Copiar comando de instalação');
+    });
+
+    document.getElementById('btn-copiar-json-ios').addEventListener('click', () => {
+      const uid   = document.getElementById('input-uid-usuario').value;
+      const token = document.getElementById('input-token-webhook').value;
+      if (!token) { mostrarToast('Sem token', 'Gere um token primeiro em "Token de Integração".', 'warning'); return; }
+      const payload = JSON.stringify({
+        uid, token,
+        tipo: "{{Tipo}}",
+        valor: "{{Valor}}",
+        descricao: "{{Descricao}}",
+        categoria: "{{Categoria}}",
+        fonte: "ios-shortcuts"
+      }, null, 2);
+      copiarTexto(payload, document.getElementById('btn-copiar-json-ios'), '📋 Copiar JSON do Atalho (com seu UID e Token)');
     });
 
     // ── OCR ───────────────────────────────────────────────────────
@@ -1073,6 +1131,8 @@
       inscricaoConfig = onSnapshot(doc(db, `usuarios/${uid}/configuracoes/geral`), snap => {
         if (!snap.exists()) { setDoc(snap.ref, {bancos:['Dinheiro Físico'], categorias:['🍔 Alimentação'], cartoes:[]}, {merge:true}); return; }
         cacheConfig = snap.data();
+        // Exibe token salvo no campo
+        if (cacheConfig.webhookToken) document.getElementById('input-token-webhook').value = cacheConfig.webhookToken;
         const selB = document.getElementById('input-banco'); selB.innerHTML = '';
         const listaB = document.getElementById('lista-bancos'); listaB.innerHTML = '';
         (cacheConfig.bancos||[]).forEach(b => {
