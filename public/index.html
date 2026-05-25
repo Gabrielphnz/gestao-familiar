@@ -260,7 +260,9 @@
           <p><b>5.</b> Execute: <span class="font-mono bg-gray-200 px-1 rounded">python monitor.py</span></p>
           <p><b>6.</b> Conceda permissão de notificações quando solicitado</p>
         </div>
-        <button id="btn-copiar-cmd-android" class="w-full bg-gray-100 text-gray-700 font-bold text-xs py-2 rounded-xl hover:bg-gray-200 transition">📋 Copiar comando de instalação</button>
+        <button id="btn-copiar-cmd-android" class="w-full bg-gray-100 text-gray-700 font-bold text-xs py-2 rounded-xl hover:bg-gray-200 transition mb-2">📋 Copiar comando de instalação</button>
+        <button id="btn-copiar-cmd-configurar" class="w-full bg-green-600 text-white font-bold text-xs py-2.5 rounded-xl hover:bg-green-700 transition">⚡ Copiar comando de configuração (UID + Token)</button>
+        <p class="text-[10px] text-gray-400 mt-1.5 text-center">Cole este comando no Termux após instalar o monitor — ele preenche UID e Token automaticamente.</p>
       </div>
 
       <!-- IOS -->
@@ -609,6 +611,19 @@
 
     document.getElementById('btn-copiar-cmd-android').addEventListener('click', () => {
       copiarTexto('pkg install -y python termux-api && pip install requests', document.getElementById('btn-copiar-cmd-android'), '📋 Copiar comando de instalação');
+    });
+
+    document.getElementById('btn-copiar-cmd-configurar').addEventListener('click', () => {
+      const uid   = document.getElementById('input-uid-usuario').value;
+      const token = document.getElementById('input-token-webhook').value;
+      if (!uid)   { mostrarToast('Aguarde', 'UID ainda carregando...', 'info'); return; }
+      if (!token) { mostrarToast('Sem token', 'Gere um token primeiro em "Token de Integração".', 'warning'); return; }
+      const cmd = [
+        `sed -i 's/SEU_UID_AQUI/${uid}/' ~/gestao-monitor.py`,
+        `sed -i 's/SEU_TOKEN_AQUI/${token}/' ~/gestao-monitor.py`,
+        `echo "✅ Configurado! Execute: python ~/gestao-monitor.py"`
+      ].join(' && ');
+      copiarTexto(cmd, document.getElementById('btn-copiar-cmd-configurar'), '⚡ Copiar comando de configuração (UID + Token)');
     });
 
     document.getElementById('btn-copiar-json-ios').addEventListener('click', () => {
