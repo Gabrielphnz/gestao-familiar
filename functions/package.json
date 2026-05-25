@@ -2,7 +2,7 @@
   "name": "gestao-familiar-functions",
   "version": "1.0.0",
   "description": "Cloud Functions — Gestão Familiar",
-  "engines": { "node": "18" },
+  "engines": { "node": "22" },
   "main": "index.js",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
