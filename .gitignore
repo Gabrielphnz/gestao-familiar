@@ -5,3 +5,45 @@ functions/package-lock.json
 .agents/
 skills-lock.json
 *.local
+
+# ───────────────────────── segredos (nunca versionar)
+.env
+.env.*
+!.env.example
+!.env.*.example
+service-account*.json
+*firebase-adminsdk*.json
+*credential*.json
+*.pem
+*.key
+
+# ───────────────────────── dependencias e build
+node_modules/
+dist/
+build/
+out/
+.next/
+venv/
+__pycache__/
+*.pyc
+
+# ───────────────────────── ferramentas
+.firebase/
+.vercel
+.cache/
+coverage/
+
+# ───────────────────────── binarios pesados
+*.exe
+*.msi
+*.dmg
+*.zip
+*.7z
+*.blockmap
+win-unpacked/
+
+# ───────────────────────── sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

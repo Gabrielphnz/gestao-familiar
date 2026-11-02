@@ -1,12 +1,13 @@
 {
   "hosting": {
+    "site": "gestao-financeira-gp",
     "public": "public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   },
   "functions": [
     {
       "source": "functions",
-      "codebase": "default",
+      "codebase": "gestaofinanceira",
       "ignore": ["node_modules", ".git"]
     }
   ]
