@@ -1,31 +1,31 @@
 # Gestão Financeira
 
-Projeto da Aureate Sistemas. Repositorio: `Gabrielphnz/gest-ao-financeira` (privado).
+Projeto da Aureate Sistemas. Repositório: `Gabrielphnz/gestao-familiar` (privado).
 
 ## Versionamento — leia antes de mexer
 
-Este projeto e versionado no GitHub. **Toda alteracao precisa virar commit e ser
-enviada**, senao o que esta no ar deixa de corresponder ao que esta registrado.
+Este projeto é versionado no GitHub. **Toda alteração precisa virar commit e ser
+enviada**, senão o que está no ar deixa de corresponder ao que está registrado.
 
-Ao terminar um conjunto de mudancas:
+Ao terminar um conjunto de mudanças:
 
 ```bash
 git add -A
-git commit -m "descricao do que mudou"
+git commit -m "descrição do que mudou"
 git push
 ```
 
-Nao deixe alteracao sem commit ao encerrar a conversa. Se houver algo pendente,
+Não deixe alteração sem commit ao encerrar a conversa. Se houver algo pendente,
 avise o Gabriel explicitamente.
 
 ## Segredos
 
-O `.gitignore` ja exclui `.env`, `service-account*.json`, chaves e afins.
+O `.gitignore` já exclui `.env`, `service-account*.json`, chaves e afins.
 **Nunca** remova essas linhas nem force o envio desses arquivos. Se precisar
-documentar uma variavel, use `.env.example` com o valor em branco.
+documentar uma variável, use `.env.example` com o valor em branco.
 
-## Publicacao
+## Publicação
 
 Confira o `firebase.json` e o `.firebaserc` antes de qualquer `firebase deploy`:
-varias pastas desta maquina apontam para projetos Firebase diferentes, e um
+várias pastas desta máquina apontam para projetos Firebase diferentes, e um
 deploy na pasta errada tira um sistema de cliente do ar.
